@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class Challenger {
-    String id;
-    public String inGameName;
-    public long discordId;
+    private final String id;
+    private final String inGameName;
+    private final long discordId;
 }
