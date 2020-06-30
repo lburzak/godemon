@@ -6,38 +6,42 @@ import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
 import lombok.Data;
 
-public class GetChallengeStatusUseCase {
+import static com.polydome.godemon.domain.usecase.AcceptChallengeUseCase.Error.CHALLENGER_NOT_REGISTERED;
+import static com.polydome.godemon.domain.usecase.AcceptChallengeUseCase.Error.CHALLENGE_ALREADY_ACTIVE;
+
+public class AcceptChallengeUseCase {
     private final ChallengerRepository challengerRepository;
     private final ChallengeRepository challengeRepository;
 
-    public GetChallengeStatusUseCase(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository) {
+    public AcceptChallengeUseCase(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository) {
         this.challengerRepository = challengerRepository;
         this.challengeRepository = challengeRepository;
     }
 
     public enum Error {
         CHALLENGER_NOT_REGISTERED,
-        CHALLENGE_NOT_ACTIVE
+        CHALLENGE_ALREADY_ACTIVE
     }
 
     @Data
     public static class Result {
-        public final Error error;
-        public final ChallengeStatus status;
+        private final Error error;
+        private final int firstGodId;
     }
 
     public Result execute(long discordId) {
         Challenger challenger = challengerRepository.findByDiscordId(discordId);
-        if (challenger == null) {
-            return new Result(Error.CHALLENGER_NOT_REGISTERED, null);
-        }
+        if (challenger == null)
+            return new Result(CHALLENGER_NOT_REGISTERED, 0);
 
         Challenge challenge = challengeRepository.findByChallengerId(challenger.getId());
-        if (challenge == null)
-            return new Result(Error.CHALLENGE_NOT_ACTIVE, null);
 
-        ChallengeStatus status = new ChallengeStatus(challenge.getAvailableGods().size());
-        return new Result(null, status);
+        if (challenge != null && challenge.isActive())
+            return new Result(CHALLENGE_ALREADY_ACTIVE, 0);
+
+        challenge.setActive(true);
+        challengeRepository.update(challenger.getId(), challenge);
+
+        return new Result(null, challenge.getAvailableGods().keySet().iterator().next());
     }
-
 }

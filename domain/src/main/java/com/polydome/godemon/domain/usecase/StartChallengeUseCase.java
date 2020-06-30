@@ -6,6 +6,8 @@ import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
 import lombok.Data;
 
+import java.util.Map;
+
 import static com.polydome.godemon.domain.usecase.StartChallengeUseCase.Error.CHALLENGER_NOT_REGISTERED;
 import static com.polydome.godemon.domain.usecase.StartChallengeUseCase.Error.CHALLENGE_ALREADY_ACTIVE;
 
@@ -34,10 +36,13 @@ public class StartChallengeUseCase {
             return new Result(CHALLENGER_NOT_REGISTERED, 0);
 
         Challenge challenge = challengeRepository.findByChallengerId(challenger.getId());
-        if (challenge != null)
+        if (challenge != null && challenge.isActive())
             return new Result(CHALLENGE_ALREADY_ACTIVE, 0);
 
         int firstGodId = randomNumberGenerator.getInt(0, gameRulesProvider.getGodsCount() - 1);
+
+        challengeRepository.insert(challenger.getId(), Map.of(firstGodId, 1), false);
+
         return new Result(null, firstGodId);
     }
 
