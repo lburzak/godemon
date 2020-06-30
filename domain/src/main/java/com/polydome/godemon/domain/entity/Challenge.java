@@ -7,5 +7,5 @@ import java.util.Map;
 
 @Data
 public class Challenge {
-    @NonNull public Map<Integer, Integer> availableGods;
+    @NonNull public final Map<Integer, Integer> availableGods;
 }
