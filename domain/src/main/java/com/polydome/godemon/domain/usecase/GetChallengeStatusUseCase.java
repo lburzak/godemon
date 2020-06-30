@@ -27,18 +27,17 @@ public class GetChallengeStatusUseCase {
     }
 
     public Result execute(long discordId) {
-        try {
-            Challenger challenger = challengerRepository.findByDiscordId(discordId);
-            Challenge challenge = challengeRepository.findByChallengerId(challenger.getId());
-            ChallengeStatus status = new ChallengeStatus(challenge.availableGods.size());
-
-            return new Result(null, status);
-        } catch (ChallengerNotFoundException e) {
+        Challenger challenger = challengerRepository.findByDiscordId(discordId);
+        if (challenger == null) {
             return new Result(Error.CHALLENGER_NOT_REGISTERED, null);
-        } catch (ChallengeNotFoundException e) {
-            return new Result(Error.CHALLENGE_NOT_ACTIVE, null);
         }
 
+        Challenge challenge = challengeRepository.findByChallengerId(challenger.getId());
+        if (challenge == null)
+            return new Result(Error.CHALLENGE_NOT_ACTIVE, null);
+
+        ChallengeStatus status = new ChallengeStatus(challenge.availableGods.size());
+        return new Result(null, status);
     }
 
 }
