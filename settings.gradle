@@ -1,3 +1,5 @@
 rootProject.name = 'godemon'
 include 'domain'
 include 'discord-bot'
+include 'smite-api-client'
+
