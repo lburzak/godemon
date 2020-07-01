@@ -17,8 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Bot extends ListenerAdapter {
-    private final ChallengerRepository challengerRepository = createChallengerRepositoryMock();
-    private final ChallengeRepository challengeRepository = createChallengeRepositoryMock();
+    private final ChallengerRepository challengerRepository = createChallengerRepositoryStub();
+    private final ChallengeRepository challengeRepository = createChallengeRepositoryStub();
+    private final GameRulesProvider gameRulesProvider = createGameRulesProviderStub();
 
     public static void main(String[] args) throws LoginException {
         if (args.length < 1) {
@@ -32,6 +33,7 @@ public class Bot extends ListenerAdapter {
     }
 
     private static class CommandInvocation {
+
         public String command;
         public String[] args;
 
@@ -120,7 +122,7 @@ public class Bot extends ListenerAdapter {
         StartChallengeUseCase startChallengeUseCase = new StartChallengeUseCase(
                 challengerRepository,
                 challengeRepository,
-                () -> 40,
+                gameRulesProvider,
                 (min, max) -> 3
         );
 
@@ -129,7 +131,7 @@ public class Bot extends ListenerAdapter {
         String message;
 
         if (result.getError() == null) {
-            message = String.format("%s, I offer you %d. Do you accept?", event.getAuthor().getAsMention(), result.getFirstGodId());
+            message = String.format("%s, I offer you %d. Do you accept?", event.getAuthor().getAsMention(), 1);
         } else {
             message = switch (result.getError()) {
                 case CHALLENGE_ALREADY_ACTIVE -> "You are not done yet!";
@@ -144,7 +146,7 @@ public class Bot extends ListenerAdapter {
 
     }
 
-    private static ChallengerRepository createChallengerRepositoryMock() {
+    private static ChallengerRepository createChallengerRepositoryStub() {
         return new ChallengerRepository() {
             private final Map<Long, Challenger> data = new HashMap<>();
 
@@ -160,7 +162,7 @@ public class Bot extends ListenerAdapter {
         };
     }
 
-    private static ChallengeRepository createChallengeRepositoryMock() {
+    private static ChallengeRepository createChallengeRepositoryStub() {
         return new ChallengeRepository() {
             private final Map<String, Challenge> data = new HashMap<>();
 
@@ -177,6 +179,25 @@ public class Bot extends ListenerAdapter {
             @Override
             public void update(String challengerId, Challenge newChallenge) {
                 data.put(challengerId, newChallenge);
+            }
+        };
+    }
+
+    private static GameRulesProvider createGameRulesProviderStub() {
+        return new GameRulesProvider() {
+            @Override
+            public int getGodsCount() {
+                return 40;
+            }
+
+            @Override
+            public int getChallengeProposedGodsCount() {
+                return 3;
+            }
+
+            @Override
+            public int getBaseRerolls() {
+                return 0;
             }
         };
     }
