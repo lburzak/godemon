@@ -8,6 +8,7 @@ import com.polydome.godemon.domain.repository.PropositionRepository;
 import lombok.Data;
 import lombok.NonNull;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import static com.polydome.godemon.domain.usecase.StartChallengeUseCase.Error.*;
@@ -69,8 +70,23 @@ public class StartChallengeUseCase {
     @NonNull
     private int[] getRandomGods(int count) {
         int[] gods = new int[count];
-        for (int i = 0; i < count; i++)
-            gods[i] = randomNumberGenerator.getInt(0, gameRulesProvider.getGodsCount());
+        boolean roll = true;
+        for (int i = 0; i < count; i++) {
+            while (roll) {
+                gods[i] = randomNumberGenerator.getInt(0, gameRulesProvider.getGodsCount() - 1);
+
+                roll = false;
+
+                for (int j = 0; j <= i - 1; j++) {
+                    if (gods[j] == gods[i]) {
+                        roll = true;
+                        break;
+                    }
+                }
+            }
+
+            roll = true;
+        }
 
         return gods;
     }

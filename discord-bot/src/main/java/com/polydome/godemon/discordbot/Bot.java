@@ -17,14 +17,19 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import javax.annotation.Nonnull;
 import javax.security.auth.login.LoginException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 public class Bot extends ListenerAdapter {
     private final ChallengerRepository challengerRepository = createChallengerRepositoryStub();
     private final ChallengeRepository challengeRepository = createChallengeRepositoryStub();
     private final GameRulesProvider gameRulesProvider = createGameRulesProviderStub();
     private final PropositionRepository propositionRepository = createPropositionRepositoryStub();
+    private final GodsDataProvider godsDataProvider = createGodsDataProviderStub();
 
     public static void main(String[] args) throws LoginException {
         if (args.length < 1) {
@@ -133,7 +138,7 @@ public class Bot extends ListenerAdapter {
                 challengerRepository,
                 challengeRepository,
                 gameRulesProvider,
-                (min, max) -> 3,
+                (min, max) -> ThreadLocalRandom.current().nextInt(min, max + 1),
                 propositionRepository
         );
 
@@ -147,13 +152,18 @@ public class Bot extends ListenerAdapter {
                     String content;
 
                     if (result.getError() == null) {
-                        content = String.format("%s, I offer you %d. Do you accept?", event.getAuthor().getAsMention(), 1);
+                        content = String.format(
+                                "%s, choose your first god from the following:",
+                                event.getAuthor().getAsMention()
+                        );
 
-                        String[] unicodeDigits = { "0⃣", ":ra:727776401092116551", "1⃣", "2⃣", "3⃣" };
+                        List<GodData> godsData = Arrays.stream(result.getProposition().getGods())
+                                .mapToObj(godsDataProvider::findById)
+                                .collect(Collectors.toList());
 
                         message.editMessage(content).queue(sentMessage -> {
-                            for (int i = 1; i <= 3; i++) {
-                                sentMessage.addReaction(unicodeDigits[i]).queue();
+                            for (GodData godData : godsData) {
+                                sentMessage.addReaction(godData.getEmoteId()).queue();
                             }
                         });
                     } else {
@@ -214,7 +224,7 @@ public class Bot extends ListenerAdapter {
         return new GameRulesProvider() {
             @Override
             public int getGodsCount() {
-                return 40;
+                return 4;
             }
 
             @Override
@@ -241,6 +251,21 @@ public class Bot extends ListenerAdapter {
             @Override
             public void insert(String challengerId, int[] gods, int rerolls, long messageId) {
                 data.put(challengerId, new Proposition(challengerId, gods, rerolls, messageId));
+            }
+        };
+    }
+
+    private GodsDataProvider createGodsDataProviderStub() {
+        return new GodsDataProvider() {
+            private final Map<Integer, GodData> data = Map.ofEntries(
+                    Map.entry(0, new GodData(":ra:727776401092116551", "Ra")),
+                    Map.entry(1, new GodData(":neith:727846105047629835", "Neith")),
+                    Map.entry(2, new GodData(":ymir:727846364020604938", "Ymir")),
+                    Map.entry(3, new GodData(":guanyu:727846363420819538", "Guan Yu"))
+            );
+            @Override
+            public GodData findById(int id) {
+                return data.get(id);
             }
         };
     }
