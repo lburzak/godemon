@@ -17,10 +17,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import javax.annotation.Nonnull;
 import javax.security.auth.login.LoginException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -37,7 +34,7 @@ public class Bot extends ListenerAdapter {
             System.exit(1);
         }
 
-        JDABuilder.createLight(args[0], GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES)
+        JDABuilder.createLight(args[0], GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS)
                 .addEventListeners(new Bot())
                 .build();
     }
@@ -83,13 +80,13 @@ public class Bot extends ListenerAdapter {
             case "challenge" -> onChallengeStatusRequested(event);
             case "me" -> onIntroduction(event, commandInvocation.args);
             case "request" -> onChallengeRequested(event);
-            case "accept" -> onChallengeAccepted(event);
         }
     }
 
     @Override
     public void onMessageReactionAdd(@Nonnull MessageReactionAddEvent event) {
-        event.retrieveMessage().queue(message -> System.out.println(message.getIdLong()));
+        if (!event.getReaction().isSelf())
+            onChallengeAccepted(event);
     }
 
     private void onChallengeStatusRequested(MessageReceivedEvent event) {
@@ -179,8 +176,37 @@ public class Bot extends ListenerAdapter {
         );
     }
 
-    private void onChallengeAccepted(MessageReceivedEvent event) {
+    private void onChallengeAccepted(MessageReactionAddEvent event) {
+        AcceptChallengeUseCase acceptChallengeUseCase = new AcceptChallengeUseCase(
+                challengerRepository,
+                challengeRepository,
+                propositionRepository
+        );
 
+        event.retrieveMessage().queue(message -> {
+            System.out.println(message.getContentRaw());
+
+            String emoteId = String.format(":%s:%s", event.getReactionEmote().getName(), event.getReactionEmote().getId());
+            GodData godData = godsDataProvider.findByEmote(emoteId);
+            if (godData == null) {
+                System.out.println("God not found: " + emoteId);
+                return;
+            }
+            AcceptChallengeUseCase.Result result =
+                    acceptChallengeUseCase.execute(event.getUserIdLong(), godData.getId());
+
+            String content;
+
+            if (result.getError() == null) {
+                content = String.format(
+                        "%s, Your starting god is `%s`! Good luck!",
+                        event.getUser().getAsMention(), godData.getName()
+                );
+                message.editMessage(content).queue();
+
+                message.clearReactions().queue();
+            }
+        });
     }
 
     private static ChallengerRepository createChallengerRepositoryStub() {
@@ -210,7 +236,7 @@ public class Bot extends ListenerAdapter {
 
             @Override
             public void insert(String challengerId, Map<Integer, Integer> availableGods) {
-                data.put(challengerId, new Challenge(availableGods));
+                data.put(challengerId, new Challenge(new HashMap<>(availableGods)));
             }
 
             @Override
@@ -258,14 +284,22 @@ public class Bot extends ListenerAdapter {
     private GodsDataProvider createGodsDataProviderStub() {
         return new GodsDataProvider() {
             private final Map<Integer, GodData> data = Map.ofEntries(
-                    Map.entry(0, new GodData(":ra:727776401092116551", "Ra")),
-                    Map.entry(1, new GodData(":neith:727846105047629835", "Neith")),
-                    Map.entry(2, new GodData(":ymir:727846364020604938", "Ymir")),
-                    Map.entry(3, new GodData(":guanyu:727846363420819538", "Guan Yu"))
+                    Map.entry(0, new GodData(0, ":ra:727776401092116551", "Ra")),
+                    Map.entry(1, new GodData(1, ":neith:727846105047629835", "Neith")),
+                    Map.entry(2, new GodData(2, ":ymir:727846364020604938", "Ymir")),
+                    Map.entry(3, new GodData(3, ":guanyu:727846363420819538", "Guan Yu"))
             );
             @Override
             public GodData findById(int id) {
                 return data.get(id);
+            }
+
+            @Override
+            public GodData findByEmote(String emoteId) {
+                Optional<GodData> match =
+                        data.values().stream().filter(godData -> godData.getEmoteId().equals(emoteId)).findFirst();
+
+                return match.orElse(null);
             }
         };
     }

@@ -47,7 +47,7 @@ public class AcceptChallengeUseCase {
         if (challenge != null && challenge.getAvailableGods().size() > 0)
             return new Result(CHALLENGE_ALREADY_ACTIVE, 0);
 
-        challenge.getAvailableGods().put(proposition.getGods()[choice], 1);
+        challenge.getAvailableGods().put(choice, 1);
 
         challengeRepository.update(challenger.getId(), challenge);
 
