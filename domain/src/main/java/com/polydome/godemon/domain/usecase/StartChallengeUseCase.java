@@ -4,25 +4,27 @@ import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
+import com.polydome.godemon.domain.repository.PropositionRepository;
 import lombok.Data;
 import lombok.NonNull;
 
 import java.util.Map;
 
-import static com.polydome.godemon.domain.usecase.StartChallengeUseCase.Error.CHALLENGER_NOT_REGISTERED;
-import static com.polydome.godemon.domain.usecase.StartChallengeUseCase.Error.CHALLENGE_ALREADY_ACTIVE;
+import static com.polydome.godemon.domain.usecase.StartChallengeUseCase.Error.*;
 
 public class StartChallengeUseCase {
     private final ChallengerRepository challengerRepository;
     private final ChallengeRepository challengeRepository;
     private final GameRulesProvider gameRulesProvider;
     private final RandomNumberGenerator randomNumberGenerator;
+    private final PropositionRepository propositionRepository;
 
-    public StartChallengeUseCase(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository, GameRulesProvider gameRulesProvider, RandomNumberGenerator randomNumberGenerator) {
+    public StartChallengeUseCase(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository, GameRulesProvider gameRulesProvider, RandomNumberGenerator randomNumberGenerator, PropositionRepository propositionRepository) {
         this.challengerRepository = challengerRepository;
         this.challengeRepository = challengeRepository;
         this.gameRulesProvider = gameRulesProvider;
         this.randomNumberGenerator = randomNumberGenerator;
+        this.propositionRepository = propositionRepository;
     }
 
     @Data
@@ -33,25 +35,32 @@ public class StartChallengeUseCase {
 
     public enum Error {
         CHALLENGER_NOT_REGISTERED,
-        CHALLENGE_ALREADY_ACTIVE
+        CHALLENGE_ALREADY_ACTIVE,
+        CHALLENGE_ALREADY_PROPOSED
     }
 
-    public Result execute(long discordId) {
+    public Result execute(long discordId, long messageId) {
         Challenger challenger = challengerRepository.findByDiscordId(discordId);
         if (challenger == null)
             return new Result(CHALLENGER_NOT_REGISTERED, null);
 
         Challenge challenge = challengeRepository.findByChallengerId(challenger.getId());
-        if (challenge != null && challenge.isActive())
+        if (challenge != null && challenge.getAvailableGods().size() > 0)
             return new Result(CHALLENGE_ALREADY_ACTIVE, null);
 
-        int firstGodId = randomNumberGenerator.getInt(0, gameRulesProvider.getGodsCount() - 1);
+        if (propositionRepository.findByChallengerId(challenger.getId()) != null)
+            return new Result(CHALLENGE_ALREADY_PROPOSED, null);
 
-        challengeRepository.insert(challenger.getId(), Map.of(firstGodId, 1), false);
+        challengeRepository.insert(challenger.getId(), Map.of());
+
+        int[] gods = getRandomGods(gameRulesProvider.getChallengeProposedGodsCount());
+        int rerolls = gameRulesProvider.getBaseRerolls();
+
+        propositionRepository.insert(challenger.getId(), gods, rerolls, messageId);
 
         ChallengeProposition challengeProposition = new ChallengeProposition(
-            getRandomGods(gameRulesProvider.getChallengeProposedGodsCount()),
-            gameRulesProvider.getBaseRerolls()
+            gods,
+            rerolls
         );
 
         return new Result(null, challengeProposition);

@@ -8,5 +8,4 @@ import java.util.Map;
 @Data
 public class Challenge {
     @NonNull private final Map<Integer, Integer> availableGods;
-    @NonNull private boolean isActive;
 }

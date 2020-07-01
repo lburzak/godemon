@@ -2,16 +2,20 @@ package com.polydome.godemon.discordbot;
 
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Challenger;
+import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
+import com.polydome.godemon.domain.repository.PropositionRepository;
 import com.polydome.godemon.domain.usecase.*;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
+import javax.annotation.Nonnull;
 import javax.security.auth.login.LoginException;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +24,7 @@ public class Bot extends ListenerAdapter {
     private final ChallengerRepository challengerRepository = createChallengerRepositoryStub();
     private final ChallengeRepository challengeRepository = createChallengeRepositoryStub();
     private final GameRulesProvider gameRulesProvider = createGameRulesProviderStub();
+    private final PropositionRepository propositionRepository = createPropositionRepositoryStub();
 
     public static void main(String[] args) throws LoginException {
         if (args.length < 1) {
@@ -77,6 +82,11 @@ public class Bot extends ListenerAdapter {
         }
     }
 
+    @Override
+    public void onMessageReactionAdd(@Nonnull MessageReactionAddEvent event) {
+        event.retrieveMessage().queue(message -> System.out.println(message.getIdLong()));
+    }
+
     private void onChallengeStatusRequested(MessageReceivedEvent event) {
         MessageChannel channel = event.getChannel();
 
@@ -123,23 +133,40 @@ public class Bot extends ListenerAdapter {
                 challengerRepository,
                 challengeRepository,
                 gameRulesProvider,
-                (min, max) -> 3
+                (min, max) -> 3,
+                propositionRepository
         );
 
-        StartChallengeUseCase.Result result = startChallengeUseCase.execute(event.getAuthor().getIdLong());
+        channel.sendMessage("I'm picking some gods for you...").queue(
+                message -> {
+                    StartChallengeUseCase.Result result = startChallengeUseCase.execute(
+                            event.getAuthor().getIdLong(),
+                            message.getIdLong()
+                    );
 
-        String message;
+                    String content;
 
-        if (result.getError() == null) {
-            message = String.format("%s, I offer you %d. Do you accept?", event.getAuthor().getAsMention(), 1);
-        } else {
-            message = switch (result.getError()) {
-                case CHALLENGE_ALREADY_ACTIVE -> "You are not done yet!";
-                case CHALLENGER_NOT_REGISTERED -> "A Challenge? Don't you think I deserve a proper introduction first?";
-            };
-        }
+                    if (result.getError() == null) {
+                        content = String.format("%s, I offer you %d. Do you accept?", event.getAuthor().getAsMention(), 1);
 
-        channel.sendMessage(message).queue();
+                        String[] unicodeDigits = { "0⃣", ":ra:727776401092116551", "1⃣", "2⃣", "3⃣" };
+
+                        message.editMessage(content).queue(sentMessage -> {
+                            for (int i = 1; i <= 3; i++) {
+                                sentMessage.addReaction(unicodeDigits[i]).queue();
+                            }
+                        });
+                    } else {
+                        content = switch (result.getError()) {
+                            case CHALLENGE_ALREADY_ACTIVE -> "You are not done yet!";
+                            case CHALLENGER_NOT_REGISTERED -> "A Challenge? Don't you think I deserve a proper introduction first?";
+                            case CHALLENGE_ALREADY_PROPOSED -> "I've already gave you a proposition.";
+                        };
+
+                        message.editMessage(content).queue();
+                    }
+                }
+        );
     }
 
     private void onChallengeAccepted(MessageReceivedEvent event) {
@@ -172,8 +199,8 @@ public class Bot extends ListenerAdapter {
             }
 
             @Override
-            public void insert(String challengerId, Map<Integer, Integer> availableGods, boolean isActive) {
-                data.put(challengerId, new Challenge(availableGods, isActive));
+            public void insert(String challengerId, Map<Integer, Integer> availableGods) {
+                data.put(challengerId, new Challenge(availableGods));
             }
 
             @Override
@@ -198,6 +225,22 @@ public class Bot extends ListenerAdapter {
             @Override
             public int getBaseRerolls() {
                 return 0;
+            }
+        };
+    }
+
+    private PropositionRepository createPropositionRepositoryStub() {
+        return new PropositionRepository() {
+            private final Map<String, Proposition> data = new HashMap<>();
+
+            @Override
+            public Proposition findByChallengerId(String id) {
+                return data.get(id);
+            }
+
+            @Override
+            public void insert(String challengerId, int[] gods, int rerolls, long messageId) {
+                data.put(challengerId, new Proposition(challengerId, gods, rerolls, messageId));
             }
         };
     }

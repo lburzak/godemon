@@ -6,6 +6,6 @@ import java.util.Map;
 
 public interface ChallengeRepository {
     Challenge findByChallengerId(String Id);
-    void insert(String challengerId, Map<Integer, Integer> availableGods, boolean isActive);
+    void insert(String challengerId, Map<Integer, Integer> availableGods);
     void update(String challengerId, Challenge newChallenge);
 }
