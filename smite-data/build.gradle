@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+    id "io.freefair.lombok" version "5.1.0"
+}
+
+group 'com.polydome.godemon'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+test {
+    useJUnitPlatform()
+}
+
+dependencies {
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
+    testImplementation 'org.junit.platform:junit-platform-commons:1.7.0-M1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.7.0-M1'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+}
