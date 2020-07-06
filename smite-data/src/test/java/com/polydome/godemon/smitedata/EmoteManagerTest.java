@@ -1,11 +1,11 @@
 package com.polydome.godemon.smitedata;
 
-import com.polydome.godemon.smitedata.endpoint.EmojiEndpoint;
-import com.polydome.godemon.smitedata.entity.Emoji;
-import com.polydome.godemon.smitedata.entity.EmojiHost;
+import com.polydome.godemon.smitedata.endpoint.EmoteEndpoint;
+import com.polydome.godemon.smitedata.entity.Emote;
+import com.polydome.godemon.smitedata.entity.EmoteHost;
 import com.polydome.godemon.smitedata.entity.God;
-import com.polydome.godemon.smitedata.entity.HostedEmoji;
-import com.polydome.godemon.smitedata.repository.EmojiRepository;
+import com.polydome.godemon.smitedata.entity.HostedEmote;
+import com.polydome.godemon.smitedata.repository.EmoteRepository;
 import com.polydome.godemon.smitedata.repository.GodsRepository;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -18,27 +18,27 @@ import java.util.LinkedList;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class EmojiManagerTest {
-    List<Emoji> emojiRepositoryData = new LinkedList<>();
+class EmoteManagerTest {
+    List<Emote> emoteRepositoryData = new LinkedList<>();
 
-    EmojiEndpoint emojiEndpointStub = new EmojiEndpoint() {
+    EmoteEndpoint emoteEndpointStub = new EmoteEndpoint() {
         @Override
-        public Single<List<HostedEmoji>> fetchEmojisFromHost(long guildId) {
+        public Single<List<HostedEmote>> fetchEmotesFromHost(long guildId) {
             return Single.just(
                     Arrays.asList(
-                            new HostedEmoji(10, "horus"),
-                            new HostedEmoji(20, "tyr"),
-                            new HostedEmoji(30, "flavia")
+                            new HostedEmote(10, "horus"),
+                            new HostedEmote(20, "tyr"),
+                            new HostedEmote(30, "flavia")
                     )
             );
         }
     };
 
-    EmojiRepository emojiRepositoryStub = new EmojiRepository() {
+    EmoteRepository emoteRepositoryStub = new EmoteRepository() {
         @Override
-        public Completable insert(Emoji emoji) {
+        public Completable insert(Emote emote) {
             return Completable.create(emitter -> {
-                        emojiRepositoryData.add(emoji);
+                        emoteRepositoryData.add(emote);
                         emitter.onComplete();
                     }
             );
@@ -65,11 +65,11 @@ class EmojiManagerTest {
     };
 
     @Test
-    public void hostProvidesEmojis_repositoryIsPopulated() {
-        EmojiManager SUT = new EmojiManager(emojiEndpointStub, emojiRepositoryStub, godsRepositoryStub);
+    public void hostProvidesEmote_repositoryIsPopulated() {
+        EmoteManager SUT = new EmoteManager(emoteEndpointStub, emoteRepositoryStub, godsRepositoryStub);
 
-        SUT.updateEmojiStorage(new EmojiHost(1, 1)).subscribe(
-                () -> System.out.println(emojiRepositoryData)
+        SUT.updateEmoteStorage(new EmoteHost(1, 1)).subscribe(
+                () -> System.out.println(emoteRepositoryData)
         );
     }
 }

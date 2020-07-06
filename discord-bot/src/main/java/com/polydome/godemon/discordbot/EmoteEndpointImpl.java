@@ -1,7 +1,7 @@
 package com.polydome.godemon.discordbot;
 
-import com.polydome.godemon.smitedata.endpoint.EmojiEndpoint;
-import com.polydome.godemon.smitedata.entity.HostedEmoji;
+import com.polydome.godemon.smitedata.endpoint.EmoteEndpoint;
+import com.polydome.godemon.smitedata.entity.HostedEmote;
 import io.reactivex.Single;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Emote;
@@ -10,22 +10,22 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class EmojiEndpointImpl implements EmojiEndpoint {
+public class EmoteEndpointImpl implements EmoteEndpoint {
     private final JDA jda;
 
-    public EmojiEndpointImpl(JDA jda) {
+    public EmoteEndpointImpl(JDA jda) {
         this.jda = jda;
     }
 
-    private HostedEmoji serializeEmote(Emote emote) {
-        return new HostedEmoji(
+    private HostedEmote serializeEmote(Emote emote) {
+        return new HostedEmote(
                 emote.getIdLong(),
                 emote.getName()
         );
     }
 
     @Override
-    public Single<List<HostedEmoji>> fetchEmojisFromHost(long guildId) {
+    public Single<List<HostedEmote>> fetchEmotesFromHost(long guildId) {
         return Single.create(emitter -> {
             emitter.onSuccess(
                 Objects.requireNonNull(jda.getGuildById(guildId))

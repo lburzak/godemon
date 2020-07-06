@@ -5,7 +5,7 @@ import lombok.ToString;
 
 @AllArgsConstructor
 @ToString
-public class Emoji {
+public class Emote {
     public final int godId;
     public final String displayId;
     public final long hostedId;
