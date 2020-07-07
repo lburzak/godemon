@@ -15,8 +15,7 @@ public class GodManager {
     private String godNameFromLocalizedName(String localized) {
         return localized
                 .toLowerCase()
-                .replaceAll("'", "")
-                .replaceAll(" ", "-");
+                .replaceAll("[' ]", "");
     }
 
     public Completable updateKnownGods() {
