@@ -4,6 +4,5 @@ include 'discord-bot'
 include 'smite-api-client'
 include 'smite-data'
 include 'data'
-include 'data'
-include 'data'
+include 'hot-test'
 

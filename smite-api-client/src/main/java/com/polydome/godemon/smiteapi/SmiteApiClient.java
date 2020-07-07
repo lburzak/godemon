@@ -43,6 +43,7 @@ public class SmiteApiClient {
     private String sessionId;
 
     private final String DEFAULT_FORMAT = "json";
+    private final LanguageCode DEFAULT_LANG = LanguageCode.ENGLISH;
 
     private SmiteApiClient(String endpointUrl, String devId, String authKey, OkHttpClient httpClient, Moshi moshi) {
         this.endpointUrl = endpointUrl;
@@ -55,31 +56,6 @@ public class SmiteApiClient {
         timestampFormatter = DateTimeFormatter
                 .ofPattern("uuuuMMddHHmmss")
                 .withZone( ZoneId.of("UTC"));
-    }
-
-    private void handleUnexpectedResponse(Throwable t) {
-        if (t instanceof UnexpectedResponseException)
-            logger.info(
-                    "Unexpected response: {}",
-                    ((UnexpectedResponseException) t).getRawResponse()
-            );
-    }
-
-    public static void main(String[] args) {
-        SmiteApiClient client = SmiteApiClient.builder()
-                .endpointUrl("http://api.smitegame.com/smiteapi.svc")
-                .devId("SMITE_API_DEV_KEY")
-                .authKey("SMITE_API_AUTH_KEY")
-                .httpClient(new OkHttpClient())
-                .moshi(new Moshi.Builder().build())
-                .build();
-
-        client.initialize()
-                .andThen(client.getPlayer("KaGacz"))
-                .subscribe(
-                        player -> { client.logger.info("Found player - {}", player.hiRezName); },
-                        client::handleUnexpectedResponse
-                );
     }
 
     private String parseApiMethod(String method) {
@@ -179,11 +155,28 @@ public class SmiteApiClient {
         });
     }
 
-    private static Builder builder() {
+    public Maybe<List<GodDefinition>> getGods() {
+        String method = "getgods";
+
+        return Maybe.create(emitter -> {
+            HttpUrl.Builder urlBuilder = createBaseUrlBuilder(method)
+                    .addPathSegment(sessionId)
+                    .addPathSegment(createTimestamp())
+                    .addPathSegment(String.valueOf(DEFAULT_LANG.id));
+
+            Request request = createSimpleRequest(urlBuilder.build());
+
+            JsonAdapter<List<GodDefinition>> adapter = moshi.adapter(Types.newParameterizedType(List.class, GodDefinition.class));
+            performJsonApiCall(request, adapter)
+                    .subscribe(emitter::onSuccess);
+        });
+    }
+
+    public static Builder builder() {
         return new Builder();
     }
 
-    private static class Builder {
+    public static class Builder {
         private String endpointUrl;
         private String devId;
         private String authKey;
