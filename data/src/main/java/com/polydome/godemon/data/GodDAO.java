@@ -19,7 +19,7 @@ public class GodDAO implements GodsRepository {
     public GodDAO(Connection connection) throws SQLException {
         this.connection = connection;
         findByNameStatement =
-                connection.prepareStatement("SELECT * FROM god WHERE name_en LIKE ? LIMIT 1");
+                connection.prepareStatement("SELECT * FROM god WHERE name LIKE ? LIMIT 1");
         insertIfNotExistsStatement =
                 connection.prepareStatement("INSERT IGNORE INTO god(name, name_en) VALUES (?, ?)");
     }
