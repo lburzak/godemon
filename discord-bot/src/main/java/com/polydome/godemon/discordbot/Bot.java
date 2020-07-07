@@ -5,38 +5,31 @@ import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
+import com.polydome.godemon.domain.repository.ChampionRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
 import com.polydome.godemon.domain.usecase.*;
-import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import javax.annotation.Nonnull;
-import javax.security.auth.login.LoginException;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 public class Bot extends ListenerAdapter {
     private final ChallengerRepository challengerRepository = createChallengerRepositoryStub();
     private final ChallengeRepository challengeRepository = createChallengeRepositoryStub();
-    private final GameRulesProvider gameRulesProvider = createGameRulesProviderStub();
     private final PropositionRepository propositionRepository = createPropositionRepositoryStub();
-    private final GodsDataProvider godsDataProvider = createGodsDataProviderStub();
+    private final GameRulesProvider gameRulesProvider;
+    private final GodsDataProvider godsDataProvider;
+    private final ChampionRepository championRepository;
 
-    public static void main(String[] args) throws LoginException {
-        if (args.length < 1) {
-            System.out.println("You have to provide a token as first argument!");
-            System.exit(1);
-        }
-
-        JDABuilder.createLight(args[0], GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS)
-                .addEventListeners(new Bot())
-                .build();
+    public Bot(GameRulesProvider gameRulesProvider, GodsDataProvider godsDataProvider, ChampionRepository championRepository) {
+        this.gameRulesProvider = gameRulesProvider;
+        this.godsDataProvider = godsDataProvider;
+        this.championRepository = championRepository;
     }
 
     private static class CommandInvocation {
@@ -135,9 +128,8 @@ public class Bot extends ListenerAdapter {
                 challengerRepository,
                 challengeRepository,
                 gameRulesProvider,
-                (min, max) -> ThreadLocalRandom.current().nextInt(min, max + 1),
-                propositionRepository
-        );
+                propositionRepository,
+                championRepository);
 
         channel.sendMessage("I'm picking some gods for you...").queue(
                 message -> {
@@ -277,29 +269,6 @@ public class Bot extends ListenerAdapter {
             @Override
             public void insert(String challengerId, int[] gods, int rerolls, long messageId) {
                 data.put(challengerId, new Proposition(challengerId, gods, rerolls, messageId));
-            }
-        };
-    }
-
-    private GodsDataProvider createGodsDataProviderStub() {
-        return new GodsDataProvider() {
-            private final Map<Integer, GodData> data = Map.ofEntries(
-                    Map.entry(0, new GodData(0, ":ra:727776401092116551", "Ra")),
-                    Map.entry(1, new GodData(1, ":neith:727846105047629835", "Neith")),
-                    Map.entry(2, new GodData(2, ":ymir:727846364020604938", "Ymir")),
-                    Map.entry(3, new GodData(3, ":guanyu:727846363420819538", "Guan Yu"))
-            );
-            @Override
-            public GodData findById(int id) {
-                return data.get(id);
-            }
-
-            @Override
-            public GodData findByEmote(String emoteId) {
-                Optional<GodData> match =
-                        data.values().stream().filter(godData -> godData.getEmoteId().equals(emoteId)).findFirst();
-
-                return match.orElse(null);
             }
         };
     }

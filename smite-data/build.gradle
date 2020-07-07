@@ -8,6 +8,7 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 test {
@@ -15,6 +16,8 @@ test {
 }
 
 dependencies {
+    implementation project(':domain')
+    implementation project(':discord-bot')
     implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
     testImplementation 'org.junit.platform:junit-platform-commons:1.7.0-M1'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.7.0-M1'

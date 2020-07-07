@@ -1,4 +1,4 @@
-package com.polydome.godemon.discordbot;
+package com.polydome.godemon.discordapi;
 
 import com.polydome.godemon.smitedata.endpoint.EmoteEndpoint;
 import com.polydome.godemon.smitedata.endpoint.EmoteHostNotAvailableException;

@@ -4,11 +4,10 @@ import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
+import com.polydome.godemon.domain.repository.ChampionRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
 import lombok.Data;
-import lombok.NonNull;
 
-import java.util.Arrays;
 import java.util.Map;
 
 import static com.polydome.godemon.domain.usecase.StartChallengeUseCase.Error.*;
@@ -17,15 +16,15 @@ public class StartChallengeUseCase {
     private final ChallengerRepository challengerRepository;
     private final ChallengeRepository challengeRepository;
     private final GameRulesProvider gameRulesProvider;
-    private final RandomNumberGenerator randomNumberGenerator;
     private final PropositionRepository propositionRepository;
+    private final ChampionRepository championRepository;
 
-    public StartChallengeUseCase(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository, GameRulesProvider gameRulesProvider, RandomNumberGenerator randomNumberGenerator, PropositionRepository propositionRepository) {
+    public StartChallengeUseCase(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository, GameRulesProvider gameRulesProvider, PropositionRepository propositionRepository, ChampionRepository championRepository) {
         this.challengerRepository = challengerRepository;
         this.challengeRepository = challengeRepository;
         this.gameRulesProvider = gameRulesProvider;
-        this.randomNumberGenerator = randomNumberGenerator;
         this.propositionRepository = propositionRepository;
+        this.championRepository = championRepository;
     }
 
     @Data
@@ -54,7 +53,7 @@ public class StartChallengeUseCase {
 
         challengeRepository.insert(challenger.getId(), Map.of());
 
-        int[] gods = getRandomGods(gameRulesProvider.getChallengeProposedGodsCount());
+        int[] gods = championRepository.getRandomIds(gameRulesProvider.getChallengeProposedGodsCount());
         int rerolls = gameRulesProvider.getBaseRerolls();
 
         propositionRepository.insert(challenger.getId(), gods, rerolls, messageId);
@@ -65,29 +64,5 @@ public class StartChallengeUseCase {
         );
 
         return new Result(null, challengeProposition);
-    }
-
-    @NonNull
-    private int[] getRandomGods(int count) {
-        int[] gods = new int[count];
-        boolean roll = true;
-        for (int i = 0; i < count; i++) {
-            while (roll) {
-                gods[i] = randomNumberGenerator.getInt(0, gameRulesProvider.getGodsCount() - 1);
-
-                roll = false;
-
-                for (int j = 0; j <= i - 1; j++) {
-                    if (gods[j] == gods[i]) {
-                        roll = true;
-                        break;
-                    }
-                }
-            }
-
-            roll = true;
-        }
-
-        return gods;
     }
 }

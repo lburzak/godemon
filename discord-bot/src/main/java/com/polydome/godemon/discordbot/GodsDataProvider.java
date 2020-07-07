@@ -1,6 +1,6 @@
 package com.polydome.godemon.discordbot;
 
-interface GodsDataProvider {
+public interface GodsDataProvider {
     GodData findById(int id);
     GodData findByEmote(String emoteId);
 }
