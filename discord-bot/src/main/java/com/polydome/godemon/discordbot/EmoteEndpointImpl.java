@@ -1,13 +1,14 @@
 package com.polydome.godemon.discordbot;
 
 import com.polydome.godemon.smitedata.endpoint.EmoteEndpoint;
+import com.polydome.godemon.smitedata.endpoint.EmoteHostNotAvailableException;
 import com.polydome.godemon.smitedata.entity.HostedEmote;
 import io.reactivex.Single;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Emote;
+import net.dv8tion.jda.api.entities.Guild;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class EmoteEndpointImpl implements EmoteEndpoint {
@@ -27,12 +28,20 @@ public class EmoteEndpointImpl implements EmoteEndpoint {
     @Override
     public Single<List<HostedEmote>> fetchEmotesFromHost(long guildId) {
         return Single.create(emitter -> {
-            emitter.onSuccess(
-                Objects.requireNonNull(jda.getGuildById(guildId))
-                        .getEmotes().stream()
-                        .map(this::serializeEmote)
-                        .collect(Collectors.toList())
-            );
+            if (jda.getStatus() != JDA.Status.CONNECTED)
+                jda.awaitReady();
+
+            Guild guild = jda.getGuildById(guildId);
+
+            if (guild == null) {
+                emitter.onError(new EmoteHostNotAvailableException(guildId));
+            } else {
+                emitter.onSuccess(
+                        guild.getEmotes().stream()
+                                .map(this::serializeEmote)
+                                .collect(Collectors.toList())
+                );
+            }
         });
     }
 }
