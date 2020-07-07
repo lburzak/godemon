@@ -9,14 +9,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class EmoteDAO implements EmoteRepository {
-    private final Connection connection;
     private final PreparedStatement insertStatement;
 
     public EmoteDAO(Connection connection) throws SQLException {
-        this.connection = connection;
-
         insertStatement = connection.prepareStatement(
-                "INSERT INTO emote(god_id, display_id, hosted_id, host_id) VALUES (?, ?, ?, ?)"
+                "INSERT IGNORE INTO emote(god_id, display_id, hosted_id, host_id) VALUES (?, ?, ?, ?)"
         );
     }
 
