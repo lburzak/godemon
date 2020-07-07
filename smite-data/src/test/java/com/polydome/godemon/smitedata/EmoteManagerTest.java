@@ -5,10 +5,12 @@ import com.polydome.godemon.smitedata.entity.Emote;
 import com.polydome.godemon.smitedata.entity.EmoteHost;
 import com.polydome.godemon.smitedata.entity.God;
 import com.polydome.godemon.smitedata.entity.HostedEmote;
+import com.polydome.godemon.smitedata.repository.EmoteHostRepository;
 import com.polydome.godemon.smitedata.repository.EmoteRepository;
 import com.polydome.godemon.smitedata.repository.GodsRepository;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -62,13 +64,25 @@ class EmoteManagerTest {
                     emitter.onSuccess(god);
             });
         }
+
+        @Override
+        public Completable insertIfNotExists(God god) {
+            return Completable.complete();
+        }
+    };
+
+    EmoteHostRepository emoteHostRepositoryStub = new EmoteHostRepository() {
+        @Override
+        public Observable<EmoteHost> findAll() {
+            return Observable.just(new EmoteHost(1, 1));
+        }
     };
 
     @Test
     public void hostProvidesEmote_repositoryIsPopulated() {
-        EmoteManager SUT = new EmoteManager(emoteEndpointStub, emoteRepositoryStub, godsRepositoryStub);
+        EmoteManager SUT = new EmoteManager(emoteEndpointStub, emoteRepositoryStub, godsRepositoryStub, emoteHostRepositoryStub);
 
-        SUT.updateEmoteStorage(new EmoteHost(1, 1)).subscribe(
+        SUT.updateKnownEmotes().subscribe(
                 () -> System.out.println(emoteRepositoryData)
         );
     }
