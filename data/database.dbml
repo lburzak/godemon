@@ -1,0 +1,50 @@
+Project godemon {
+    database_type: 'MariaDB'
+    Note: 'Any BIGINT UNSIGNED type is used to store Discord Snowflake identifiers'
+}
+
+Table god {
+    id "int unsigned" [pk, increment]
+    name varchar(20) [not null, unique, note: 'Computer-friendly name used to identify Discord emotes. Stripped from special characters and spaces. E.g. guanyu, change']
+    name_en varchar(20) [not null, note: 'Display name, e.g. Guan Yu, Chang\'e']
+    Note: 'SMITE gods known to the application'
+}
+
+Table emote_host {
+    id "int unsigned" [pk, increment] // possible space optimization
+    guild_id "bigint unsigned" [not null]
+    Note: 'Discord guilds hosting emotes'
+}
+
+Table emote {
+    id "int unsigned" [pk, increment]
+    god_id "bigint unsigned" [ref: > god.id]
+    display_id varchar(100) [not null, unique]
+    hosted_id "bigint unsigned" [not null, unique]
+    host_id "int unsigned" [not null, ref: > emote_host.id]
+    Note: 'Discord emotes known to be hosted by emote hosts'
+}
+
+Table challenger {
+    discord_id "bigint unsigned" [pk]
+    hirez_name varchar(30) [unique]
+    Note: 'Registered players'
+}
+
+Table challenge {
+    id "int unsigned" [pk]
+    challenger_id "bigint unsigned" [not null, unique, ref: - challenger.discord_id]
+    proposition_message_id "bigint unsigned" [null, note: 'Has value only if challange is in proposition stage']
+    Note: 'Ongoing challenges'
+}
+
+Table champion {
+    challenge_id "int unsigned" [ref: > challenge.id]
+    god_id "int unsigned" [ref: > god.id]
+    uses_left "int unsigned" [not null, default: 1]
+
+    indexes {
+        (challenge_id, god_id) [pk]
+    }
+    Note: 'Gods available for challenge for given player'
+}
