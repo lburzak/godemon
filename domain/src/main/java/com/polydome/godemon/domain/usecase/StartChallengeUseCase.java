@@ -44,19 +44,19 @@ public class StartChallengeUseCase {
         if (challenger == null)
             return new Result(CHALLENGER_NOT_REGISTERED, null);
 
-        Challenge challenge = challengeRepository.findByChallengerId(challenger.getId());
+        Challenge challenge = challengeRepository.findChallengeByChallengerId(challenger.getId());
         if (challenge != null && challenge.getAvailableGods().size() > 0)
             return new Result(CHALLENGE_ALREADY_ACTIVE, null);
 
-        if (propositionRepository.findByChallengerId(challenger.getId()) != null)
+        if (propositionRepository.findPropositionByChallengerId(challenger.getId()) != null)
             return new Result(CHALLENGE_ALREADY_PROPOSED, null);
 
-        challengeRepository.insert(challenger.getId(), Map.of());
+        challengeRepository.createChallenge(challenger.getId(), Map.of());
 
         int[] gods = championRepository.getRandomIds(gameRulesProvider.getChallengeProposedGodsCount());
         int rerolls = gameRulesProvider.getBaseRerolls();
 
-        propositionRepository.insert(challenger.getId(), gods, rerolls, messageId);
+        propositionRepository.createProposition(challenger.getId(), gods, rerolls, messageId);
 
         ChallengeProposition challengeProposition = new ChallengeProposition(
             gods,

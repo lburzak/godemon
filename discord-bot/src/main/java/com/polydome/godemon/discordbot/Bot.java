@@ -19,14 +19,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Bot extends ListenerAdapter {
-    private final ChallengerRepository challengerRepository = createChallengerRepositoryStub();
-    private final ChallengeRepository challengeRepository = createChallengeRepositoryStub();
-    private final PropositionRepository propositionRepository = createPropositionRepositoryStub();
+    private final ChallengerRepository challengerRepository;
+    private final ChallengeRepository challengeRepository;
+    private final PropositionRepository propositionRepository;
     private final GameRulesProvider gameRulesProvider;
     private final GodsDataProvider godsDataProvider;
     private final ChampionRepository championRepository;
 
-    public Bot(GameRulesProvider gameRulesProvider, GodsDataProvider godsDataProvider, ChampionRepository championRepository) {
+    public Bot(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository, PropositionRepository propositionRepository, GameRulesProvider gameRulesProvider, GodsDataProvider godsDataProvider, ChampionRepository championRepository) {
+        this.challengerRepository = challengerRepository;
+        this.challengeRepository = challengeRepository;
+        this.propositionRepository = propositionRepository;
         this.gameRulesProvider = gameRulesProvider;
         this.godsDataProvider = godsDataProvider;
         this.championRepository = championRepository;
@@ -197,79 +200,10 @@ public class Bot extends ListenerAdapter {
                 message.editMessage(content).queue();
 
                 message.clearReactions().queue();
+            } else {
+                System.err.println("Challenge already active");
             }
         });
     }
 
-    private static ChallengerRepository createChallengerRepositoryStub() {
-        return new ChallengerRepository() {
-            private final Map<Long, Challenger> data = new HashMap<>();
-
-            @Override
-            public Challenger findByDiscordId(long id) {
-                return data.get(id);
-            }
-
-            @Override
-            public void insert(long discordId, String inGameName) {
-                data.put(discordId, new Challenger(String.valueOf(discordId), inGameName, discordId));
-            }
-        };
-    }
-
-    private static ChallengeRepository createChallengeRepositoryStub() {
-        return new ChallengeRepository() {
-            private final Map<String, Challenge> data = new HashMap<>();
-
-            @Override
-            public Challenge findByChallengerId(String id) {
-                return data.get(id);
-            }
-
-            @Override
-            public void insert(String challengerId, Map<Integer, Integer> availableGods) {
-                data.put(challengerId, new Challenge(new HashMap<>(availableGods)));
-            }
-
-            @Override
-            public void update(String challengerId, Challenge newChallenge) {
-                data.put(challengerId, newChallenge);
-            }
-        };
-    }
-
-    private static GameRulesProvider createGameRulesProviderStub() {
-        return new GameRulesProvider() {
-            @Override
-            public int getGodsCount() {
-                return 4;
-            }
-
-            @Override
-            public int getChallengeProposedGodsCount() {
-                return 3;
-            }
-
-            @Override
-            public int getBaseRerolls() {
-                return 0;
-            }
-        };
-    }
-
-    private PropositionRepository createPropositionRepositoryStub() {
-        return new PropositionRepository() {
-            private final Map<String, Proposition> data = new HashMap<>();
-
-            @Override
-            public Proposition findByChallengerId(String id) {
-                return data.get(id);
-            }
-
-            @Override
-            public void insert(String challengerId, int[] gods, int rerolls, long messageId) {
-                data.put(challengerId, new Proposition(challengerId, gods, rerolls, messageId));
-            }
-        };
-    }
 }

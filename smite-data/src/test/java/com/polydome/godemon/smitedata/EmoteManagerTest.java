@@ -69,6 +69,11 @@ class EmoteManagerTest {
         public Completable insertIfNotExists(God god) {
             return Completable.complete();
         }
+
+        @Override
+        public Single<Integer> countAll() {
+            return Single.just(3);
+        }
     };
 
     EmoteHostRepository emoteHostRepositoryStub = new EmoteHostRepository() {

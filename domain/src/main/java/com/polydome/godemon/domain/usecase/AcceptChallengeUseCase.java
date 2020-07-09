@@ -38,18 +38,16 @@ public class AcceptChallengeUseCase {
         if (challenger == null)
             return new Result(CHALLENGER_NOT_REGISTERED, 0);
 
-        Proposition proposition = propositionRepository.findByChallengerId(challenger.getId());
+        Proposition proposition = propositionRepository.findPropositionByChallengerId(challenger.getId());
         if (proposition == null)
             return new Result(CHALLENGER_HAS_NO_PROPOSITION, 0);
 
-        Challenge challenge = challengeRepository.findByChallengerId(challenger.getId());
-
-        if (challenge != null && challenge.getAvailableGods().size() > 0)
-            return new Result(CHALLENGE_ALREADY_ACTIVE, 0);
-
+        Challenge challenge = challengeRepository.findChallengeByChallengerId(challenger.getId());
+        challenge.getAvailableGods().clear();
         challenge.getAvailableGods().put(choice, 1);
 
-        challengeRepository.update(challenger.getId(), challenge);
+        challengeRepository.updateChallenge(challenger.getId(), challenge);
+        propositionRepository.deleteProposition(challenger.getId());
 
         return new Result(null, challenge.getAvailableGods().keySet().iterator().next());
     }

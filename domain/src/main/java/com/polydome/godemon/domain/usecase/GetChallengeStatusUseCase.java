@@ -32,7 +32,7 @@ public class GetChallengeStatusUseCase {
             return new Result(Error.CHALLENGER_NOT_REGISTERED, null);
         }
 
-        Challenge challenge = challengeRepository.findByChallengerId(challenger.getId());
+        Challenge challenge = challengeRepository.findChallengeByChallengerId(challenger.getId());
         if (challenge == null)
             return new Result(Error.CHALLENGE_NOT_ACTIVE, null);
 

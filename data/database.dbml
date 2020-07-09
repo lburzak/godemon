@@ -32,7 +32,7 @@ Table challenger {
 }
 
 Table challenge {
-    id "int unsigned" [pk]
+    id "int unsigned" [pk, auto_increment]
     challenger_id "bigint unsigned" [not null, unique, ref: - challenger.discord_id]
     proposition_message_id "bigint unsigned" [null, note: 'Has value only if challange is in proposition stage']
     Note: 'Ongoing challenges'
