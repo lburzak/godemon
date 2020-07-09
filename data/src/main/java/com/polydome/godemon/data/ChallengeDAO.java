@@ -56,6 +56,10 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
                 int challengeId = row.getInt("id");
                 long messageId = row.getLong("proposition_message_id");
 
+                if (messageId == 0) {
+                    return null;
+                }
+
                 findGodsIdsByChallengerIdStatement.setInt(1, challengeId);
                 row = findGodsIdsByChallengerIdStatement.executeQuery();
 

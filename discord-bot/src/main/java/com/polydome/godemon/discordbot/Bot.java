@@ -8,6 +8,7 @@ import com.polydome.godemon.domain.repository.ChallengerRepository;
 import com.polydome.godemon.domain.repository.ChampionRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
 import com.polydome.godemon.domain.usecase.*;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -15,7 +16,9 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import javax.annotation.Nonnull;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class Bot extends ListenerAdapter {
@@ -76,6 +79,35 @@ public class Bot extends ListenerAdapter {
             case "challenge" -> onChallengeStatusRequested(event);
             case "me" -> onIntroduction(event, commandInvocation.args);
             case "request" -> onChallengeRequested(event);
+            case "gods" -> onAvailableGodsRequested(event);
+        }
+    }
+
+    private String createGodLabel(GodData godData, int usesLeft) {
+        return String.format("`%dx` <%s> **%s**", usesLeft, godData.getEmoteId(), godData.getName());
+    }
+
+    private void onAvailableGodsRequested(MessageReceivedEvent event) {
+        GetAvailableGodsUseCase getAvailableGodsUseCase = new GetAvailableGodsUseCase(challengeRepository, propositionRepository, challengerRepository);
+        GetAvailableGodsUseCase.Result result = getAvailableGodsUseCase.execute(event.getAuthor().getIdLong());
+
+        if (result.getError() == null) {
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            StringBuilder stringBuilder = new StringBuilder();
+            GodData godData;
+
+            for (var entry : result.getGodsToUsesLeft().entrySet()) {
+                godData = godsDataProvider.findById(entry.getKey());
+                stringBuilder.append(createGodLabel(godData, entry.getValue())).append("\n");
+            }
+
+            embedBuilder.setTitle(String.format("%s's gods", event.getAuthor().getName()));
+            embedBuilder.setDescription(stringBuilder.toString());
+
+            event.getChannel().sendMessage(embedBuilder.build())
+                .queue();
+        } else {
+            System.err.println(result.getError());
         }
     }
 
