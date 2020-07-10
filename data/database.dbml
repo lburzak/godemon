@@ -48,3 +48,12 @@ Table champion {
     }
     Note: 'Gods available for challenge for given player'
 }
+
+Table match {
+    challenge_id "bigint unsigned" [ref: > challenge.id]
+    own_god_id "int unsigned" [ref: > god.id]
+    opponent_god_id "int unsigned" [ref: god.id]
+    win bit(1)
+    kills "tinyint unsigned"
+    deaths "tinyint unsigned"
+}
