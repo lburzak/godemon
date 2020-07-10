@@ -1,4 +1,4 @@
-package com.polydome.godemon.data;
+package com.polydome.godemon.data.dao;
 
 import com.polydome.godemon.smitedata.entity.God;
 import com.polydome.godemon.smitedata.entity.SmiteChampion;

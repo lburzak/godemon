@@ -1,4 +1,4 @@
-package com.polydome.godemon.data;
+package com.polydome.godemon.data.dao;
 
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Proposition;

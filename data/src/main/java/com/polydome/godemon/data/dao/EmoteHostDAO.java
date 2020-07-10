@@ -1,4 +1,4 @@
-package com.polydome.godemon.data;
+package com.polydome.godemon.data.dao;
 
 import com.polydome.godemon.smitedata.entity.EmoteHost;
 import com.polydome.godemon.smitedata.repository.EmoteHostRepository;
