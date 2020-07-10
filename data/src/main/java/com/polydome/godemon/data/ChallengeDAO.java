@@ -27,7 +27,7 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
 
     public ChallengeDAO(Connection dbConnection) throws SQLException {
         selectChampionsByChallengerId =
-                dbConnection.prepareStatement("SELECT god_id, uses_left FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenger_id = ?");
+                dbConnection.prepareStatement("SELECT challenge_id, god_id, uses_left FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenger_id = ?");
         selectChallengeByChallengerId =
                 dbConnection.prepareStatement("SELECT * FROM challenge WHERE challenge.challenger_id = ?");
         deleteAllChampionsOfChallengeStatement =
@@ -94,11 +94,13 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
             selectChampionsByChallengerId.setLong(1, id);
             ResultSet row = selectChampionsByChallengerId.executeQuery();
 
+            int challengeId = row.getInt("challenge_id");
+
             while (row.next()) {
                 availableGods.put(row.getInt("god_id"), row.getInt("uses_left"));
             }
 
-            return new Challenge(availableGods);
+            return new Challenge(challengeId, availableGods);
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
