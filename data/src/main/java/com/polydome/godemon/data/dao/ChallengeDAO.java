@@ -1,9 +1,11 @@
 package com.polydome.godemon.data.dao;
 
+import com.polydome.godemon.data.repository.MatchRepositoryImpl;
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
+import io.reactivex.Maybe;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -24,6 +26,7 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
     private final PreparedStatement updatePropositionMessageIdStatement;
     private final PreparedStatement insertChallengeStatement;
     private final PreparedStatement clearPropositionStatement;
+    private final PreparedStatement selectChallengeUpdateDataStatement;
 
     public ChallengeDAO(Connection dbConnection) throws SQLException {
         selectChampionsByChallengerId =
@@ -44,6 +47,8 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
                 dbConnection.prepareStatement("INSERT INTO challenge (challenger_id) VALUES (?)");
         clearPropositionStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET proposition_message_id = NULL WHERE challenger_id = ?");
+        selectChallengeUpdateDataStatement =
+                dbConnection.prepareStatement("SELECT hirez_id, last_update FROM challenge INNER JOIN challenger on challenge.challenger_id = challenger.discord_id WHERE id = ?");
     }
 
     @Override
@@ -188,5 +193,25 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
+    }
+
+    private MatchRepositoryImpl.ChallengeUpdateData parseRowToUpdateData(ResultSet row) throws SQLException {
+        return new MatchRepositoryImpl.ChallengeUpdateData(
+                row.getInt("hirez_id"),
+                row.getTimestamp("last_update")
+        );
+    }
+
+    public Maybe<MatchRepositoryImpl.ChallengeUpdateData> findChallengeUpdateData(int challengeId) {
+        return Maybe.create(emitter -> {
+            selectChallengeUpdateDataStatement.setInt(1, challengeId);
+            ResultSet row = selectChallengeUpdateDataStatement.executeQuery();
+
+            if (row.next())
+                emitter.onSuccess(parseRowToUpdateData(row));
+            else {
+                emitter.onComplete();
+            }
+        });
     }
 }
