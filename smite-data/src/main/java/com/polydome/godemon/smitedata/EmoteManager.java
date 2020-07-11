@@ -56,6 +56,12 @@ public class EmoteManager {
 
     public Completable updateKnownEmotes() {
         return emoteHostRepository.findAll()
+                .publish(observable -> {
+                    observable.count().subscribe(
+                        (count) -> { if (count == 0) logger.warn("No emote hosts registered!"); }
+                    );
+                    return observable;
+                })
                 .doOnNext(emoteHost -> logger.info("Processing emotes from {}", emoteHost.guildId))
                 .flatMapCompletable(this::updateKnownEmotesFromHost);
     }

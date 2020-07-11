@@ -6,4 +6,5 @@ include 'smite-data'
 include 'data'
 include 'hot-test'
 include 'discord-api'
+include 'dbtools'
 
