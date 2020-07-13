@@ -30,7 +30,7 @@ public class GodDAO implements GodsRepository, SmiteChampionRepository {
         findByNameStatement =
                 connection.prepareStatement("SELECT * FROM god WHERE name LIKE ? LIMIT 1");
         insertIfNotExistsStatement =
-                connection.prepareStatement("INSERT IGNORE INTO god(name, name_en) VALUES (?, ?)");
+                connection.prepareStatement("INSERT IGNORE INTO god(id, name, name_en) VALUES (?, ?, ?)");
         countAllStatement =
                 connection.prepareStatement("SELECT COUNT(*) as count FROM god");
         findByIdWithEmoteStatement =
@@ -65,8 +65,9 @@ public class GodDAO implements GodsRepository, SmiteChampionRepository {
     @Override
     public Completable insertIfNotExists(God god) {
         return Completable.create(emitter -> {
-            insertIfNotExistsStatement.setString(1, god.name);
-            insertIfNotExistsStatement.setString(2, god.displayName);
+            insertIfNotExistsStatement.setInt(1, god.id);
+            insertIfNotExistsStatement.setString(2, god.name);
+            insertIfNotExistsStatement.setString(3, god.displayName);
 
             insertIfNotExistsStatement.execute();
             emitter.onComplete();
