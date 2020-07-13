@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface GodEndpoint {
     Single<List<String>> fetchLocalizedNamesOfAll();
+    Single<List<SmiteGod>> fetchAllGods();
 }

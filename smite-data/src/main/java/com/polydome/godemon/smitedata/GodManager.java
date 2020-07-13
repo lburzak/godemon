@@ -19,10 +19,10 @@ public class GodManager {
     }
 
     public Completable updateKnownGods() {
-        return godEndpoint.fetchLocalizedNamesOfAll()
+        return godEndpoint.fetchAllGods()
                 .flatMapObservable(Observable::fromIterable)
-                .flatMapCompletable(localizedName -> godsRepository.insertIfNotExists(
-                        new God(0, godNameFromLocalizedName(localizedName), localizedName)
+                .flatMapCompletable(smiteGod -> godsRepository.insertIfNotExists(
+                        new God(smiteGod.getId(), godNameFromLocalizedName(smiteGod.getLocalizedName()), smiteGod.getLocalizedName())
                 ));
     }
 }
