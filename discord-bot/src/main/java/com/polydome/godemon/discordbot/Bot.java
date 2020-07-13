@@ -143,7 +143,7 @@ public class Bot extends ListenerAdapter {
     private void onIntroduction(MessageReceivedEvent event, String[] args) {
         MessageChannel channel = event.getChannel();
 
-        IntroduceUseCase introduceUseCase = new IntroduceUseCase(challengerRepository);
+        IntroduceUseCase introduceUseCase = new IntroduceUseCase(challengerRepository, playerEndpoint);
         IntroduceUseCase.Result result = introduceUseCase.execute(event.getAuthor().getIdLong(), args[0]);
 
         String message;

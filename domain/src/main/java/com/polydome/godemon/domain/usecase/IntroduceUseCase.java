@@ -5,9 +5,11 @@ import lombok.Data;
 
 public class IntroduceUseCase {
     private final ChallengerRepository challengerRepository;
+    private final PlayerEndpoint playerEndpoint;
 
-    public IntroduceUseCase(ChallengerRepository challengerRepository) {
+    public IntroduceUseCase(ChallengerRepository challengerRepository, PlayerEndpoint playerEndpoint) {
         this.challengerRepository = challengerRepository;
+        this.playerEndpoint = playerEndpoint;
     }
 
     @Data
@@ -17,14 +19,20 @@ public class IntroduceUseCase {
     }
 
     public enum Error {
-        CHALLENGER_ALREADY_REGISTERED
+        CHALLENGER_ALREADY_REGISTERED,
+        PLAYER_NOT_EXISTS
     }
 
     public Result execute(long discordId, String inGameName) {
         if (challengerRepository.findByDiscordId(discordId) != null)
             return new Result(Error.CHALLENGER_ALREADY_REGISTERED, inGameName);
 
-        challengerRepository.insert(discordId, inGameName);
+        Integer inGameId = playerEndpoint.fetchPlayerId(inGameName);
+
+        if (inGameId == null)
+            return new Result(Error.PLAYER_NOT_EXISTS, null);
+
+        challengerRepository.insert(discordId, inGameName, inGameId);
         return new Result(null, inGameName);
     }
 }
