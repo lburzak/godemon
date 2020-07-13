@@ -1,6 +1,7 @@
 package com.polydome.godemon.smiteapi;
 
 import com.polydome.godemon.domain.usecase.PlayerEndpoint;
+import io.reactivex.Single;
 
 public class PlayerEndpointImpl implements PlayerEndpoint {
     private final SmiteApiClient smiteApiClient;
@@ -11,7 +12,11 @@ public class PlayerEndpointImpl implements PlayerEndpoint {
 
     @Override
     public Integer fetchPlayerId(String name) {
-        return smiteApiClient.getPlayer(name).map(player -> player.id)
+        int id = smiteApiClient.getPlayer(name)
+                .switchIfEmpty(Single.just(new Player(0, "")))
+                .map(player -> player.id)
                 .blockingGet();
+
+        return (id == 0) ? null : id;
     }
 }

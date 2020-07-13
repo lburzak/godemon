@@ -150,7 +150,10 @@ public class SmiteApiClient {
             JsonAdapter<List<Player>> adapter = moshi.adapter(Types.newParameterizedType(List.class, Player.class));
             performJsonApiCall(request, adapter)
                     .subscribe(response -> {
-                        logger.info("Found player - {}", response.get(0).hiRezName);
+                        if (response.size() == 0)
+                            emitter.onComplete();
+                        else
+                            emitter.onSuccess(response.get(0));
                     });
         });
     }
