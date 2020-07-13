@@ -16,7 +16,7 @@ public class ChallengerDAO implements ChallengerRepository {
         this.findByDiscordIdStatement =
                 dbConnection.prepareStatement("SELECT * FROM challenger WHERE discord_id = ? LIMIT 1");
         this.insertStatement =
-                dbConnection.prepareStatement("INSERT INTO challenger (discord_id, hirez_name) VALUES (?, ?)");
+                dbConnection.prepareStatement("INSERT INTO challenger (discord_id, hirez_name, hirez_id) VALUES (?, ?, ?)");
     }
 
     @Override
@@ -36,10 +36,11 @@ public class ChallengerDAO implements ChallengerRepository {
     }
 
     @Override
-    public void insert(long discordId, String inGameName) {
+    public void insert(long discordId, String inGameName, int inGameId) {
         try {
             insertStatement.setLong(1, discordId);
             insertStatement.setString(2, inGameName);
+            insertStatement.setInt(3, inGameId);
             insertStatement.execute();
         } catch (SQLException e) {
             e.printStackTrace();

@@ -23,14 +23,16 @@ public class Bot extends ListenerAdapter {
     private final GameRulesProvider gameRulesProvider;
     private final GodsDataProvider godsDataProvider;
     private final ChampionRepository championRepository;
+    private final PlayerEndpoint playerEndpoint;
 
-    public Bot(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository, PropositionRepository propositionRepository, GameRulesProvider gameRulesProvider, GodsDataProvider godsDataProvider, ChampionRepository championRepository) {
+    public Bot(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository, PropositionRepository propositionRepository, GameRulesProvider gameRulesProvider, GodsDataProvider godsDataProvider, ChampionRepository championRepository, PlayerEndpoint playerEndpoint) {
         this.challengerRepository = challengerRepository;
         this.challengeRepository = challengeRepository;
         this.propositionRepository = propositionRepository;
         this.gameRulesProvider = gameRulesProvider;
         this.godsDataProvider = godsDataProvider;
         this.championRepository = championRepository;
+        this.playerEndpoint = playerEndpoint;
     }
 
     private static class CommandInvocation {
@@ -153,6 +155,7 @@ public class Bot extends ListenerAdapter {
         } else {
             message = switch (result.getError()) {
                 case CHALLENGER_ALREADY_REGISTERED -> "I already know you...";
+                case PLAYER_NOT_EXISTS -> String.format("There is no SMITE player named %s", args[0]);
             };
         }
 
