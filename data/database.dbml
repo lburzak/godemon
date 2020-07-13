@@ -4,7 +4,7 @@ Project godemon {
 }
 
 Table god {
-    id "int unsigned" [pk, increment]
+    id "int unsigned" [pk, increment, note: 'Consistent with Hi-Rez data']
     name varchar(20) [not null, unique, note: 'Computer-friendly name used to identify Discord emotes. Stripped from special characters and spaces. E.g. guanyu, change']
     name_en varchar(20) [not null, note: 'Display name, e.g. Guan Yu, Chang\'e']
     Note: 'SMITE gods known to the application'
