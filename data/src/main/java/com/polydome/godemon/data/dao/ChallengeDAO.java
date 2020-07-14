@@ -1,5 +1,7 @@
 package com.polydome.godemon.data.dao;
 
+import com.polydome.godemon.data.service.GameModeService;
+import com.polydome.godemon.domain.factory.ChallengeFactory;
 import com.polydome.godemon.data.repository.MatchRepositoryImpl;
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.GameMode;
@@ -28,10 +30,12 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
     private final PreparedStatement insertChallengeStatement;
     private final PreparedStatement clearPropositionStatement;
     private final PreparedStatement selectChallengeUpdateDataStatement;
+    private final ChallengeFactory challengeFactory;
+    private final GameModeService gameModeService;
 
-    public ChallengeDAO(Connection dbConnection) throws SQLException {
+    public ChallengeDAO(Connection dbConnection, ChallengeFactory challengeFactory, GameModeService gameModeService) throws SQLException {
         selectChampionsByChallengerId =
-                dbConnection.prepareStatement("SELECT challenge_id, god_id, uses_left FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenger_id = ?");
+                dbConnection.prepareStatement("SELECT challenge_id, god_id, uses_left, gamemode_id FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenger_id = ?");
         selectChallengeByChallengerId =
                 dbConnection.prepareStatement("SELECT * FROM challenge WHERE challenge.challenger_id = ?");
         deleteAllChampionsOfChallengeStatement =
@@ -45,11 +49,13 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
         updatePropositionMessageIdStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET proposition_message_id = ? WHERE challenger_id = ?");
         insertChallengeStatement =
-                dbConnection.prepareStatement("INSERT INTO challenge (challenger_id) VALUES (?)");
+                dbConnection.prepareStatement("INSERT INTO challenge (challenger_id, gamemode_id) VALUES (?, ?)");
         clearPropositionStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET proposition_message_id = NULL WHERE challenger_id = ?");
         selectChallengeUpdateDataStatement =
                 dbConnection.prepareStatement("SELECT hirez_id, last_update FROM challenge INNER JOIN challenger on challenge.challenger_id = challenger.discord_id WHERE id = ?");
+        this.challengeFactory = challengeFactory;
+        this.gameModeService = gameModeService;
     }
 
     @Override
@@ -101,12 +107,13 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
             ResultSet row = selectChampionsByChallengerId.executeQuery();
 
             int challengeId = row.getInt("challenge_id");
+            int gameModeId = row.getInt("gamemode_id");
 
             while (row.next()) {
                 availableGods.put(row.getInt("god_id"), row.getInt("uses_left"));
             }
 
-            return new Challenge(challengeId, availableGods);
+            return challengeFactory.create(challengeId, availableGods, gameModeId);
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
@@ -142,12 +149,13 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
      * Replaces all champions assigned to a challenger with those listed in {@code availableGods}
      * @param challengerId Id of challenger
      * @param availableGods Map of champion id to uses left count
-     * @param gameMode
+     * @param gameMode `GameMode` linked to the challenge
      */
     @Override
     public void createChallenge(long challengerId, Map<Integer, Integer> availableGods, GameMode gameMode) {
         try {
             insertChallengeStatement.setLong(1, challengerId);
+            insertChallengeStatement.setInt(2, gameModeService.getGameModeId(gameMode));
             insertChallengeStatement.execute();
 
             deleteAllChampionsOfChallengeStatement.setLong(1, challengerId);
