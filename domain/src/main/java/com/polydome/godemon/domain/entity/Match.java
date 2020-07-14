@@ -6,7 +6,7 @@ import lombok.Data;
 public class Match {
     private final int ownGod;
     private final int opponentGod;
-    private final int kills;
-    private final int deaths;
+    private final byte kills;
+    private final byte deaths;
     private final boolean win;
 }

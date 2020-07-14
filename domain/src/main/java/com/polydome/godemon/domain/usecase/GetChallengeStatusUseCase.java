@@ -115,7 +115,7 @@ public class GetChallengeStatusUseCase {
                 // TODO: Remove all participants but player and one enemy
                 .filter(matchDetails -> matchDetails.getParticipantsCount() == 2)
                 .map(matchDetails -> matchDetailsToMatch(matchDetails, challenger.getInGameId()))
-                .forEach(matchRepository::createMatch);
+                .forEach(match -> matchRepository.createMatch(match, challenge.getId()));
 
         var touchedChallenge = challenge.toBuilder()
                 .lastUpdate(Instant.now())
