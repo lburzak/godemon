@@ -2,6 +2,8 @@ package com.polydome.godemon.discordbot;
 
 import com.polydome.godemon.domain.entity.Match;
 import com.polydome.godemon.domain.repository.*;
+import com.polydome.godemon.domain.service.GameRulesProvider;
+import com.polydome.godemon.domain.service.PlayerEndpoint;
 import com.polydome.godemon.domain.usecase.*;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;

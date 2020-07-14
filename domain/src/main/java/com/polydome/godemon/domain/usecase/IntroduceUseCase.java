@@ -1,6 +1,7 @@
 package com.polydome.godemon.domain.usecase;
 
 import com.polydome.godemon.domain.repository.ChallengerRepository;
+import com.polydome.godemon.domain.service.PlayerEndpoint;
 import lombok.Data;
 
 public class IntroduceUseCase {

@@ -1,6 +1,6 @@
 package com.polydome.godemon.smitedata;
 
-import com.polydome.godemon.domain.usecase.GameRulesProvider;
+import com.polydome.godemon.domain.service.GameRulesProvider;
 import com.polydome.godemon.smitedata.repository.GodsRepository;
 
 public class SmiteRulesProvider implements GameRulesProvider {

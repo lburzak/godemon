@@ -2,10 +2,12 @@ package com.polydome.godemon.domain.usecase;
 
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Challenger;
+import com.polydome.godemon.domain.model.ChallengeProposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
 import com.polydome.godemon.domain.repository.ChampionRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
+import com.polydome.godemon.domain.service.GameRulesProvider;
 import lombok.Data;
 
 import java.util.Map;

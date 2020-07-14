@@ -1,4 +1,4 @@
-package com.polydome.godemon.domain.usecase;
+package com.polydome.godemon.domain.model;
 
 import lombok.Data;
 

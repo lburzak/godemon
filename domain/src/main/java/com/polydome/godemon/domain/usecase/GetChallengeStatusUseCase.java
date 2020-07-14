@@ -3,6 +3,7 @@ package com.polydome.godemon.domain.usecase;
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.entity.Match;
+import com.polydome.godemon.domain.model.ChallengeStatus;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
 import com.polydome.godemon.domain.repository.MatchRepository;

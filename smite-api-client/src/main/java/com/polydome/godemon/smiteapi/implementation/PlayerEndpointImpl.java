@@ -1,6 +1,6 @@
 package com.polydome.godemon.smiteapi.implementation;
 
-import com.polydome.godemon.domain.usecase.PlayerEndpoint;
+import com.polydome.godemon.domain.service.PlayerEndpoint;
 import com.polydome.godemon.smiteapi.client.SmiteApiClient;
 import com.polydome.godemon.smiteapi.model.Player;
 import io.reactivex.Single;
