@@ -1,4 +1,4 @@
-package com.polydome.godemon.smiteapi;
+package com.polydome.godemon.smiteapi.model;
 
 import lombok.Getter;
 

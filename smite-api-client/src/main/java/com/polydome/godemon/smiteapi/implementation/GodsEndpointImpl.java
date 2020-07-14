@@ -1,5 +1,7 @@
-package com.polydome.godemon.smiteapi;
+package com.polydome.godemon.smiteapi.implementation;
 
+import com.polydome.godemon.smiteapi.client.SmiteApiClient;
+import com.polydome.godemon.smiteapi.model.GodDefinition;
 import com.polydome.godemon.smitedata.endpoint.GodEndpoint;
 import com.polydome.godemon.smitedata.endpoint.SmiteGod;
 import io.reactivex.Observable;

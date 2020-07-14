@@ -1,6 +1,6 @@
 package com.polydome.godemon.smiteapi.json;
 
-import com.polydome.godemon.smiteapi.Queue;
+import com.polydome.godemon.smiteapi.model.Queue;
 import com.squareup.moshi.FromJson;
 import com.squareup.moshi.ToJson;
 

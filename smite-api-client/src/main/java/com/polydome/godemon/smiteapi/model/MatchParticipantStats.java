@@ -1,4 +1,4 @@
-package com.polydome.godemon.smiteapi;
+package com.polydome.godemon.smiteapi.model;
 
 import com.squareup.moshi.Json;
 import lombok.Data;

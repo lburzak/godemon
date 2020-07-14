@@ -1,5 +1,6 @@
-package com.polydome.godemon.smiteapi;
+package com.polydome.godemon.smiteapi.client;
 
+import com.polydome.godemon.smiteapi.model.*;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.JsonEncodingException;
 import com.squareup.moshi.Moshi;
@@ -20,16 +21,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
-class UnexpectedResponseException extends Exception {
-    @Getter
-    private final String rawResponse;
-
-    public UnexpectedResponseException(String message, String rawResponse) {
-        super(message);
-        this.rawResponse = rawResponse;
-    }
-}
 
 @Slf4j
 public class SmiteApiClient {
