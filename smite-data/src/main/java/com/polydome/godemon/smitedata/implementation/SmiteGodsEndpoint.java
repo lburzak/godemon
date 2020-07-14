@@ -1,4 +1,4 @@
-package com.polydome.godemon.smiteapi.implementation;
+package com.polydome.godemon.smitedata.implementation;
 
 import com.polydome.godemon.smiteapi.client.SmiteApiClient;
 import com.polydome.godemon.smiteapi.model.GodDefinition;
@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @AllArgsConstructor
-public class GodsEndpointImpl implements GodEndpoint {
+public class SmiteGodsEndpoint implements GodEndpoint {
     private final SmiteApiClient apiClient;
 
     @Override

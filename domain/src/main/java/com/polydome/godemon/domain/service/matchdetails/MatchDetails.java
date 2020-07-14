@@ -1,13 +1,9 @@
-package com.polydome.godemon.data.repository.model;
+package com.polydome.godemon.domain.service.matchdetails;
 
 import lombok.Data;
 
 @Data
 public class MatchDetails {
-    public enum Mode {
-        RANKED_DUEL
-    }
-
     private final byte participantsCount;
     private final PlayerRecord[] players;
 }

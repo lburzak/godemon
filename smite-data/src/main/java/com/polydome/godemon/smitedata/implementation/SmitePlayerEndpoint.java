@@ -1,14 +1,14 @@
-package com.polydome.godemon.smiteapi.implementation;
+package com.polydome.godemon.smitedata.implementation;
 
 import com.polydome.godemon.domain.service.PlayerEndpoint;
 import com.polydome.godemon.smiteapi.client.SmiteApiClient;
 import com.polydome.godemon.smiteapi.model.Player;
 import io.reactivex.Single;
 
-public class PlayerEndpointImpl implements PlayerEndpoint {
+public class SmitePlayerEndpoint implements PlayerEndpoint {
     private final SmiteApiClient smiteApiClient;
 
-    public PlayerEndpointImpl(SmiteApiClient smiteApiClient) {
+    public SmitePlayerEndpoint(SmiteApiClient smiteApiClient) {
         this.smiteApiClient = smiteApiClient;
     }
 

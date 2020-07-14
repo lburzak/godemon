@@ -1,4 +1,4 @@
-package com.polydome.godemon.data.repository.model;
+package com.polydome.godemon.domain.service.matchdetails;
 
 import lombok.Data;
 

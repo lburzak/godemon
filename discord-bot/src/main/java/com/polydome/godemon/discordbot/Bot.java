@@ -1,10 +1,12 @@
 package com.polydome.godemon.discordbot;
 
-import com.polydome.godemon.domain.entity.Match;
+import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.repository.*;
 import com.polydome.godemon.domain.service.GameRulesProvider;
 import com.polydome.godemon.domain.service.PlayerEndpoint;
+import com.polydome.godemon.domain.service.matchdetails.MatchDetailsEndpoint;
 import com.polydome.godemon.domain.usecase.*;
+import lombok.AllArgsConstructor;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
@@ -13,11 +15,11 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+@AllArgsConstructor
 public class Bot extends ListenerAdapter {
     private final ChallengerRepository challengerRepository;
     private final ChallengeRepository challengeRepository;
@@ -26,16 +28,8 @@ public class Bot extends ListenerAdapter {
     private final GodsDataProvider godsDataProvider;
     private final ChampionRepository championRepository;
     private final PlayerEndpoint playerEndpoint;
-
-    public Bot(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository, PropositionRepository propositionRepository, GameRulesProvider gameRulesProvider, GodsDataProvider godsDataProvider, ChampionRepository championRepository, PlayerEndpoint playerEndpoint) {
-        this.challengerRepository = challengerRepository;
-        this.challengeRepository = challengeRepository;
-        this.propositionRepository = propositionRepository;
-        this.gameRulesProvider = gameRulesProvider;
-        this.godsDataProvider = godsDataProvider;
-        this.championRepository = championRepository;
-        this.playerEndpoint = playerEndpoint;
-    }
+    private final MatchRepository matchRepository;
+    private final MatchDetailsEndpoint matchDetailsEndpoint;
 
     private static class CommandInvocation {
 
@@ -118,16 +112,8 @@ public class Bot extends ListenerAdapter {
 
     private void onChallengeStatusRequested(MessageReceivedEvent event) {
         MessageChannel channel = event.getChannel();
-        MatchRepository matchRepositoryStub = challengeId -> Stream.of(
-                new Match(379, 3, 8, 1, true),
-                new Match(3, 408, 6, 3, true),
-                new Match(379, 48, 9, 5, false),
-                new Match(3, 65, 2, 1, true),
-                new Match(65, 69, 4, 0, true),
-                new Match(65, 10, 4, 4, false)
-        );
 
-        GetChallengeStatusUseCase getChallengeStatusUseCase = new GetChallengeStatusUseCase(challengerRepository, challengeRepository, matchRepositoryStub);
+        GetChallengeStatusUseCase getChallengeStatusUseCase = new GetChallengeStatusUseCase(challengerRepository, challengeRepository, matchRepository, matchDetailsEndpoint);
         GetChallengeStatusUseCase.Result result = getChallengeStatusUseCase.execute(event.getAuthor().getIdLong());
 
         String message;
@@ -178,7 +164,8 @@ public class Bot extends ListenerAdapter {
                 message -> {
                     StartChallengeUseCase.Result result = startChallengeUseCase.execute(
                             event.getAuthor().getIdLong(),
-                            message.getIdLong()
+                            message.getIdLong(),
+                            GameMode.RANKED_DUEL
                     );
 
                     String content;

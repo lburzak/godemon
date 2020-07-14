@@ -1,23 +1,23 @@
-package com.polydome.godemon.smiteapi.implementation;
+package com.polydome.godemon.smitedata.implementation;
 
-import com.polydome.godemon.data.repository.model.MatchDetails;
-import com.polydome.godemon.data.repository.service.MatchDetailsEndpoint;
-import com.polydome.godemon.data.repository.model.PlayerRecord;
+import com.polydome.godemon.domain.entity.GameMode;
+import com.polydome.godemon.domain.service.matchdetails.MatchDetails;
+import com.polydome.godemon.domain.service.matchdetails.MatchDetailsEndpoint;
+import com.polydome.godemon.domain.service.matchdetails.PlayerRecord;
 import com.polydome.godemon.smiteapi.client.SmiteApiClient;
 import com.polydome.godemon.smiteapi.model.MatchParticipantStats;
 import com.polydome.godemon.smiteapi.model.Queue;
 import com.polydome.godemon.smiteapi.model.RecentMatch;
 import io.reactivex.Observable;
-import io.reactivex.Single;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MatchDetailsEndpointImpl implements MatchDetailsEndpoint {
+public class SmiteMatchDetailsEndpoint implements MatchDetailsEndpoint {
     private final SmiteApiClient smiteApiClient;
 
-    public MatchDetailsEndpointImpl(SmiteApiClient smiteApiClient) {
+    public SmiteMatchDetailsEndpoint(SmiteApiClient smiteApiClient) {
         this.smiteApiClient = smiteApiClient;
     }
 
@@ -41,7 +41,7 @@ public class MatchDetailsEndpointImpl implements MatchDetailsEndpoint {
         );
     }
 
-    private Queue modeToQueue(MatchDetails.Mode mode) {
+    private Queue modeToQueue(GameMode mode) {
         return switch(mode) {
             case RANKED_DUEL -> Queue.RANKED_DUEL;
             default -> throw new UnsupportedOperationException("Unable to convert mode " + mode.name() + " to queue");
@@ -49,14 +49,15 @@ public class MatchDetailsEndpointImpl implements MatchDetailsEndpoint {
     }
 
     @Override
-    public Single<List<MatchDetails>> fetchNewerMatches(int playerId, MatchDetails.Mode mode, Date date) {
+    public List<MatchDetails> fetchNewerMatches(int playerId, GameMode mode, Instant instant) {
         return smiteApiClient.getMatchHistory(playerId)
                 .flatMapObservable(Observable::fromIterable)
-                .takeWhile(match -> match.getDate().isAfter(date.toInstant()))
+                .takeWhile(match -> match.getDate().isAfter(instant))
                 .filter(match -> match.getQueue() == modeToQueue(mode))
                 .map(RecentMatch::getId)
                 .flatMapMaybe(smiteApiClient::getMatchDetails)
                 .map(this::participantStatsListToMatchDetails)
-                .collectInto(new LinkedList<>(), List::add);
+                .collectInto((List<MatchDetails>) new LinkedList<MatchDetails>(), List::add)
+                .blockingGet();
     }
 }

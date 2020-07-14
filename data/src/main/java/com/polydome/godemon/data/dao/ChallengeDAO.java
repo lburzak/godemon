@@ -1,19 +1,17 @@
 package com.polydome.godemon.data.dao;
 
-import com.polydome.godemon.data.service.GameModeService;
-import com.polydome.godemon.domain.factory.ChallengeFactory;
-import com.polydome.godemon.data.repository.MatchRepositoryImpl;
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
-import io.reactivex.Maybe;
+import com.polydome.godemon.smitedata.SmiteGameModeService;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,13 +27,11 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
     private final PreparedStatement updatePropositionMessageIdStatement;
     private final PreparedStatement insertChallengeStatement;
     private final PreparedStatement clearPropositionStatement;
-    private final PreparedStatement selectChallengeUpdateDataStatement;
-    private final ChallengeFactory challengeFactory;
-    private final GameModeService gameModeService;
+    private final SmiteGameModeService gameModeService;
 
-    public ChallengeDAO(Connection dbConnection, ChallengeFactory challengeFactory, GameModeService gameModeService) throws SQLException {
+    public ChallengeDAO(Connection dbConnection, SmiteGameModeService gameModeService) throws SQLException {
         selectChampionsByChallengerId =
-                dbConnection.prepareStatement("SELECT challenge_id, god_id, uses_left, gamemode_id FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenger_id = ?");
+                dbConnection.prepareStatement("SELECT god_id, uses_left FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenger_id = ?");
         selectChallengeByChallengerId =
                 dbConnection.prepareStatement("SELECT * FROM challenge WHERE challenge.challenger_id = ?");
         deleteAllChampionsOfChallengeStatement =
@@ -52,9 +48,6 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
                 dbConnection.prepareStatement("INSERT INTO challenge (challenger_id, gamemode_id) VALUES (?, ?)");
         clearPropositionStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET proposition_message_id = NULL WHERE challenger_id = ?");
-        selectChallengeUpdateDataStatement =
-                dbConnection.prepareStatement("SELECT hirez_id, last_update FROM challenge INNER JOIN challenger on challenge.challenger_id = challenger.discord_id WHERE id = ?");
-        this.challengeFactory = challengeFactory;
         this.gameModeService = gameModeService;
     }
 
@@ -101,19 +94,21 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
     @Override
     public Challenge findChallengeByChallengerId(long id) {
         try {
-            Map<Integer, Integer> availableGods = new HashMap<>();
+            selectChallengeByChallengerId.setLong(1, id);
+            ResultSet challengeRow = selectChallengeByChallengerId.executeQuery();
+            int challengeId = challengeRow.getInt("challenge_id");
+            int gameModeId = challengeRow.getInt("gamemode_id");
+            Instant lastUpdate = challengeRow.getTimestamp("last_update").toInstant();
 
             selectChampionsByChallengerId.setLong(1, id);
-            ResultSet row = selectChampionsByChallengerId.executeQuery();
+            ResultSet championsRow = selectChampionsByChallengerId.executeQuery();
+            Map<Integer, Integer> availableGods = new HashMap<>();
 
-            int challengeId = row.getInt("challenge_id");
-            int gameModeId = row.getInt("gamemode_id");
-
-            while (row.next()) {
-                availableGods.put(row.getInt("god_id"), row.getInt("uses_left"));
+            while (championsRow.next()) {
+                availableGods.put(championsRow.getInt("god_id"), championsRow.getInt("uses_left"));
             }
 
-            return challengeFactory.create(challengeId, availableGods, gameModeId);
+            return new Challenge(challengeId, availableGods, gameModeService.getGameModeFromId(gameModeId), lastUpdate);
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
@@ -174,6 +169,7 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
 
     @Override
     public void updateChallenge(long challengerId, Challenge newChallenge) {
+        // TODO: Update lastUpdate timestamp
         try {
             selectChallengeByChallengerId.setLong(1, challengerId);
             ResultSet row = selectChallengeByChallengerId.executeQuery();
@@ -203,25 +199,5 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
-    }
-
-    private MatchRepositoryImpl.ChallengeUpdateData parseRowToUpdateData(ResultSet row) throws SQLException {
-        return new MatchRepositoryImpl.ChallengeUpdateData(
-                row.getInt("hirez_id"),
-                row.getTimestamp("last_update")
-        );
-    }
-
-    public Maybe<MatchRepositoryImpl.ChallengeUpdateData> findChallengeUpdateData(int challengeId) {
-        return Maybe.create(emitter -> {
-            selectChallengeUpdateDataStatement.setInt(1, challengeId);
-            ResultSet row = selectChallengeUpdateDataStatement.executeQuery();
-
-            if (row.next())
-                emitter.onSuccess(parseRowToUpdateData(row));
-            else {
-                emitter.onComplete();
-            }
-        });
     }
 }

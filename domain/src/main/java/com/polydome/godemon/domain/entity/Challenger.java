@@ -6,4 +6,5 @@ import lombok.Data;
 public class Challenger {
     private final long id;
     private final String inGameName;
+    private final int inGameId;
 }

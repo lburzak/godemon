@@ -4,7 +4,7 @@ import com.polydome.godemon.data.dao.EmoteDAO;
 import com.polydome.godemon.data.dao.EmoteHostDAO;
 import com.polydome.godemon.data.dao.GodDAO;
 import com.polydome.godemon.discordapi.EmoteEndpointImpl;
-import com.polydome.godemon.smiteapi.implementation.GodsEndpointImpl;
+import com.polydome.godemon.smitedata.implementation.SmiteGodsEndpoint;
 import com.polydome.godemon.smiteapi.client.SmiteApiClient;
 import com.polydome.godemon.smitedata.EmoteManager;
 import com.polydome.godemon.smitedata.GodManager;
@@ -89,7 +89,7 @@ public class DBTools {
         var dbConnection = createDatabaseConnection(cmd.getOptionValue('d'), cmd.getOptionValue('u'), cmd.getOptionValue('p'));
         var smiteApiClient = createApiClient();
         GodsRepository godRepository = new GodDAO(dbConnection);
-        var godEndpoint = new GodsEndpointImpl(smiteApiClient);
+        var godEndpoint = new SmiteGodsEndpoint(smiteApiClient);
         EmoteEndpoint emoteEndpoint = new EmoteEndpointImpl(jda);
         EmoteRepository emoteRepository = new EmoteDAO(dbConnection);
         EmoteHostRepository emoteHostRepository = new EmoteHostDAO(dbConnection);
