@@ -53,7 +53,7 @@ Table champion {
 }
 
 Table match {
-    challenge_id "bigint unsigned" [ref: > challenge.id]
+    challenge_id "int unsigned" [ref: > challenge.id]
     own_god_id "int unsigned" [ref: > god.id]
     opponent_god_id "int unsigned" [ref: god.id]
     win bit(1)
