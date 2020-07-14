@@ -9,4 +9,5 @@ import java.util.Map;
 public class Challenge {
     private final int id;
     @NonNull private final Map<Integer, Integer> availableGods;
+    private final GameMode gameMode;
 }

@@ -2,6 +2,7 @@ package com.polydome.godemon.data.dao;
 
 import com.polydome.godemon.data.repository.MatchRepositoryImpl;
 import com.polydome.godemon.domain.entity.Challenge;
+import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
@@ -141,9 +142,10 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
      * Replaces all champions assigned to a challenger with those listed in {@code availableGods}
      * @param challengerId Id of challenger
      * @param availableGods Map of champion id to uses left count
+     * @param gameMode
      */
     @Override
-    public void createChallenge(long challengerId, Map<Integer, Integer> availableGods) {
+    public void createChallenge(long challengerId, Map<Integer, Integer> availableGods, GameMode gameMode) {
         try {
             insertChallengeStatement.setLong(1, challengerId);
             insertChallengeStatement.execute();

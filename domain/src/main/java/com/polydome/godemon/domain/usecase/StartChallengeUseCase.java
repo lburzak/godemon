@@ -2,6 +2,7 @@ package com.polydome.godemon.domain.usecase;
 
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Challenger;
+import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.model.ChallengeProposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
@@ -41,7 +42,7 @@ public class StartChallengeUseCase {
         CHALLENGE_ALREADY_PROPOSED
     }
 
-    public Result execute(long discordId, long messageId) {
+    public Result execute(long discordId, long messageId, GameMode gameMode) {
         Challenger challenger = challengerRepository.findByDiscordId(discordId);
         if (challenger == null)
             return new Result(CHALLENGER_NOT_REGISTERED, null);
@@ -53,7 +54,7 @@ public class StartChallengeUseCase {
         if (propositionRepository.findPropositionByChallengerId(challenger.getId()) != null)
             return new Result(CHALLENGE_ALREADY_PROPOSED, null);
 
-        challengeRepository.createChallenge(challenger.getId(), Map.of());
+        challengeRepository.createChallenge(challenger.getId(), Map.of(), gameMode);
 
         int[] gods = championRepository.getRandomIds(gameRulesProvider.getChallengeProposedGodsCount());
         int rerolls = gameRulesProvider.getBaseRerolls();
