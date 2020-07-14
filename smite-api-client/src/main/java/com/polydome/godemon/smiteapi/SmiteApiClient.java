@@ -173,6 +173,21 @@ public class SmiteApiClient {
         });
     }
 
+    public Maybe<List<RecentMatch>> getMatchHistory(int playerId) {
+        return Maybe.create(emitter -> {
+            HttpUrl.Builder urlBuilder = createBaseUrlBuilder("getmatchhistory")
+                    .addPathSegment(sessionId)
+                    .addPathSegment(createTimestamp())
+                    .addPathSegment(String.valueOf(playerId));
+
+            Request request = createSimpleRequest(urlBuilder.build());
+
+            JsonAdapter<List<RecentMatch>> adapter = moshi.adapter(Types.newParameterizedType(List.class, RecentMatch.class));
+            performJsonApiCall(request, adapter)
+                    .subscribe(emitter::onSuccess);
+        });
+    }
+
     public Maybe<List<GodDefinition>> getGods() {
         String method = "getgods";
 

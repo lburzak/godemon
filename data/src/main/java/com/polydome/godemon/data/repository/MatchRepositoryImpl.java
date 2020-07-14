@@ -41,7 +41,7 @@ public class MatchRepositoryImpl implements MatchRepository {
                 .blockingGet();
 
         return matchDetailsEndpoint
-                .fetchOlderMatches(updateData.playerId, MatchDetails.Mode.RANKED_DUEL, updateData.lastUpdated)
+                .fetchNewerMatches(updateData.playerId, MatchDetails.Mode.RANKED_DUEL, updateData.lastUpdated)
                 .blockingGet()
                 .stream()
                 .filter(matchDetails -> matchDetails.getParticipantsCount() == 2)

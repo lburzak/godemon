@@ -6,5 +6,5 @@ import java.util.Date;
 import java.util.List;
 
 public interface MatchDetailsEndpoint {
-    Single<List<MatchDetails>> fetchOlderMatches(int playerId, MatchDetails.Mode mode, Date date);
+    Single<List<MatchDetails>> fetchNewerMatches(int playerId, MatchDetails.Mode mode, Date date);
 }

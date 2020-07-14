@@ -14,6 +14,7 @@ repositories {
 dependencies {
     implementation project(':smite-data')
     implementation project(':domain')
+    implementation project(':data')
     implementation "com.squareup.okhttp3:okhttp:4.7.2"
     implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
     implementation 'com.squareup.moshi:moshi:1.9.3'
