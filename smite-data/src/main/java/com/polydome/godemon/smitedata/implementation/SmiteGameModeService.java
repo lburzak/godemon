@@ -1,4 +1,4 @@
-package com.polydome.godemon.smitedata;
+package com.polydome.godemon.smitedata.implementation;
 
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.smiteapi.model.Queue;

@@ -5,7 +5,7 @@ import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
-import com.polydome.godemon.smitedata.SmiteGameModeService;
+import com.polydome.godemon.smitedata.implementation.SmiteGameModeService;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

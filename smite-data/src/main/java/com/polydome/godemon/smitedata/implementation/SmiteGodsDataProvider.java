@@ -1,4 +1,4 @@
-package com.polydome.godemon.smitedata;
+package com.polydome.godemon.smitedata.implementation;
 
 import com.polydome.godemon.discordbot.GodData;
 import com.polydome.godemon.discordbot.GodsDataProvider;

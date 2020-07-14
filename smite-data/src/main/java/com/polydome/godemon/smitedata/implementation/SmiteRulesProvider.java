@@ -1,4 +1,4 @@
-package com.polydome.godemon.smitedata;
+package com.polydome.godemon.smitedata.implementation;
 
 import com.polydome.godemon.domain.service.GameRulesProvider;
 import com.polydome.godemon.smitedata.repository.GodsRepository;
