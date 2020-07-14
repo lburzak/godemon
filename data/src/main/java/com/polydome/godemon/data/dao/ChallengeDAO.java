@@ -7,10 +7,7 @@ import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
 import com.polydome.godemon.smitedata.implementation.SmiteGameModeService;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +24,7 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
     private final PreparedStatement updatePropositionMessageIdStatement;
     private final PreparedStatement insertChallengeStatement;
     private final PreparedStatement clearPropositionStatement;
+    private final PreparedStatement updateChallengeLastUpdateStatement;
     private final SmiteGameModeService gameModeService;
 
     public ChallengeDAO(Connection dbConnection, SmiteGameModeService gameModeService) throws SQLException {
@@ -48,6 +46,8 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
                 dbConnection.prepareStatement("INSERT INTO challenge (challenger_id, gamemode_id) VALUES (?, ?)");
         clearPropositionStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET proposition_message_id = NULL WHERE challenger_id = ?");
+        updateChallengeLastUpdateStatement =
+                dbConnection.prepareStatement("UPDATE challenge SET last_update = ? WHERE challenger_id = ?");
         this.gameModeService = gameModeService;
     }
 
@@ -169,7 +169,6 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
 
     @Override
     public void updateChallenge(long challengerId, Challenge newChallenge) {
-        // TODO: Update lastUpdate timestamp
         try {
             selectChallengeByChallengerId.setLong(1, challengerId);
             ResultSet row = selectChallengeByChallengerId.executeQuery();
@@ -186,6 +185,9 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
                     insertChampionStatement.setInt(3, entry.getValue());
                     insertChampionStatement.execute();
             }
+
+            updateChallengeLastUpdateStatement.setTimestamp(1, Timestamp.from(newChallenge.getLastUpdate()));
+            updateChallengeLastUpdateStatement.setInt(2, challengeId);
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
