@@ -1,6 +1,9 @@
 package com.polydome.godemon.data.repository;
 
 import com.polydome.godemon.data.dao.ChallengeDAO;
+import com.polydome.godemon.data.repository.model.MatchDetails;
+import com.polydome.godemon.data.repository.model.PlayerRecord;
+import com.polydome.godemon.data.repository.service.MatchDetailsEndpoint;
 import com.polydome.godemon.domain.entity.Match;
 import com.polydome.godemon.domain.repository.MatchRepository;
 import lombok.AllArgsConstructor;

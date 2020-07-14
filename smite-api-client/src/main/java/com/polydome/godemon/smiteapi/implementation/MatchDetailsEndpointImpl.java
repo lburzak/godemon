@@ -1,8 +1,8 @@
 package com.polydome.godemon.smiteapi.implementation;
 
-import com.polydome.godemon.data.repository.MatchDetails;
-import com.polydome.godemon.data.repository.MatchDetailsEndpoint;
-import com.polydome.godemon.data.repository.PlayerRecord;
+import com.polydome.godemon.data.repository.model.MatchDetails;
+import com.polydome.godemon.data.repository.service.MatchDetailsEndpoint;
+import com.polydome.godemon.data.repository.model.PlayerRecord;
 import com.polydome.godemon.smiteapi.client.SmiteApiClient;
 import com.polydome.godemon.smiteapi.model.MatchParticipantStats;
 import com.polydome.godemon.smiteapi.model.Queue;
