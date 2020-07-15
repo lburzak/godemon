@@ -2,30 +2,30 @@ package com.polydome.godemon.domain.usecase;
 
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Challenger;
-import com.polydome.godemon.domain.entity.Match;
 import com.polydome.godemon.domain.model.ChallengeStatus;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
-import com.polydome.godemon.domain.repository.MatchRepository;
 import com.polydome.godemon.domain.service.matchdetails.MatchDetails;
 import com.polydome.godemon.domain.service.matchdetails.MatchDetailsEndpoint;
 import com.polydome.godemon.domain.service.matchdetails.PlayerRecord;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class GetChallengeStatusUseCase {
     private final ChallengerRepository challengerRepository;
     private final ChallengeRepository challengeRepository;
-    private final MatchRepository matchRepository;
     private final MatchDetailsEndpoint matchDetailsEndpoint;
 
-    public GetChallengeStatusUseCase(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository, MatchRepository matchRepository, MatchDetailsEndpoint matchDetailsEndpoint) {
+    public GetChallengeStatusUseCase(ChallengerRepository challengerRepository, ChallengeRepository challengeRepository, MatchDetailsEndpoint matchDetailsEndpoint) {
         this.challengerRepository = challengerRepository;
         this.challengeRepository = challengeRepository;
-        this.matchRepository = matchRepository;
         this.matchDetailsEndpoint = matchDetailsEndpoint;
     }
 
@@ -40,60 +40,40 @@ public class GetChallengeStatusUseCase {
         public final ChallengeStatus status;
     }
 
-    private ChallengeStatus matchToStatusReducer(ChallengeStatus status, Match match) {
-        var statusBuilder = status.toBuilder();
+    @AllArgsConstructor
+    private static class SeparatedPlayers {
+        public final Stream<PlayerRecord> anyTeam;
+        public final Stream<PlayerRecord> ownTeam;
+    }
 
-        if (status.isEnded())
-            return statusBuilder.build();
+    private SeparatedPlayers matchDetailsToSeparatedPlayers(MatchDetails matchDetails, Challenge challenge) {
+        Stream<PlayerRecord> players = Arrays.stream(matchDetails.getPlayers());
+        Stream<PlayerRecord> participants = players
+                .filter(player -> challenge.getParticipants().stream()
+                        .anyMatch(challenger -> challenger.getInGameId() == player.getPlayerId())
+                );
 
-        if (status.getGodToUsesLeft().containsKey(match.getOwnGod()))
-            return statusBuilder.build();
+        return new SeparatedPlayers(players, participants);
+    }
 
-        Map<Integer, Integer> godToUsesLeft = new HashMap<>(Map.copyOf(status.getGodToUsesLeft()));
+    private Stream<GodPool.Change> separatedPlayersToGodPoolChanges(SeparatedPlayers separatedPlayers) {
+        Optional<PlayerRecord> anyParticipant = separatedPlayers.ownTeam.findAny();
+        if (anyParticipant.isPresent()) {
+            boolean isWin = anyParticipant.get().getWinStatus() == PlayerRecord.WinStatus.WINNER;
 
-        if (match.isWin()) {
-            statusBuilder.wins(status.getWins() + 1);
-
-            Integer currentLeft = godToUsesLeft.getOrDefault(match.getOpponentGod(), 0);
-            godToUsesLeft.put(match.getOpponentGod(), currentLeft + 1);
-        } else {
-            statusBuilder.loses(status.getLoses() + 1);
-
-            int currentLeft = godToUsesLeft.getOrDefault(match.getOwnGod(), 0);
-            int newLeft = currentLeft - 1;
-
-            if (newLeft < 1) {
-                godToUsesLeft.remove(match.getOwnGod());
-                if (godToUsesLeft.size() < 1)
-                    return statusBuilder.ended(true).build();
+            if (isWin) {
+                return separatedPlayers.anyTeam
+                        .filter(player -> player.getWinStatus() == PlayerRecord.WinStatus.LOSER)
+                        .map(PlayerRecord::getGodId)
+                        .map(godId -> new GodPool.Change(GodPool.ChangeType.GRANT, godId));
             } else {
-                godToUsesLeft.put(match.getOwnGod(), newLeft);
+                return separatedPlayers.ownTeam
+                        .map(PlayerRecord::getGodId)
+                        .map(godId -> new GodPool.Change(GodPool.ChangeType.REVOKE, godId));
             }
+        } else {
+            return Stream.of();
         }
-
-        return statusBuilder
-                .godToUsesLeft(godToUsesLeft)
-                .godsLeftCount(godToUsesLeft.size())
-                .build();
-    }
-
-    private ChallengeStatus statusCombiner(ChallengeStatus combined, ChallengeStatus intermediate) {
-        throw new UnsupportedOperationException("Parallel stream reduction is not supported");
-    }
-
-    private Match matchDetailsToMatch(MatchDetails matchDetails, int ownPlayerId) {
-        int ownIndex = matchDetails.getPlayers()[0].getPlayerId() == ownPlayerId ? 0 : 1;
-        int opponentIndex = ownIndex == 0 ? 1 : 0;
-        PlayerRecord ownRecord = matchDetails.getPlayers()[ownIndex];
-        PlayerRecord opponentRecord = matchDetails.getPlayers()[opponentIndex];
-
-        return new Match(
-                ownRecord.getGodId(),
-                opponentRecord.getGodId(),
-                ownRecord.getKills(),
-                ownRecord.getDeaths(),
-                ownRecord.getWinStatus() == PlayerRecord.WinStatus.WINNER
-        );
     }
 
     public Result execute(long discordId) {
@@ -106,27 +86,46 @@ public class GetChallengeStatusUseCase {
         if (challenge == null)
             return new Result(Error.CHALLENGE_NOT_ACTIVE, null);
 
-        ChallengeStatus initialStatus =
-                new ChallengeStatus(0, 0, challenge.getAvailableGods().size(), challenge.getAvailableGods(), false);
+        List<MatchDetails> fetchedMatches = matchDetailsEndpoint
+                .fetchNewerMatches(challenger.getInGameId(), challenge.getGameMode(), challenge.getLastUpdate());
 
-        matchDetailsEndpoint
-                .fetchNewerMatches(challenger.getInGameId(), challenge.getGameMode(), challenge.getLastUpdate())
-                .stream()
-                // TODO: Remove all participants but player and one enemy
-                .filter(matchDetails -> matchDetails.getParticipantsCount() == 2)
-                .map(matchDetails -> matchDetailsToMatch(matchDetails, challenger.getInGameId()))
-                .forEach(match -> matchRepository.createMatch(match, challenge.getId()));
+        var challengeBuilder = challenge.toBuilder();
 
-        var touchedChallenge = challenge.toBuilder()
-                .lastUpdate(Instant.now())
+        Map<Integer, Integer> currentGodPool = challenge.getAvailableGods();
+        GodPool godPool = new GodPool(currentGodPool);
+        SeparatedPlayers players;
+        Stream<Integer> ownGods;
+
+        for (final var match : fetchedMatches) {
+            if (godPool.distinctCount() > challenge.getParticipants().size()) {
+                challengeBuilder.status(com.polydome.godemon.domain.entity.ChallengeStatus.FAILED);
+                break;
+            }
+
+            players = matchDetailsToSeparatedPlayers(match, challenge);
+            ownGods = players.ownTeam.map(PlayerRecord::getGodId);
+
+            if (ownGods.allMatch(godPool::contains)) {
+                godPool.applyChanges(separatedPlayersToGodPoolChanges(players));
+            }
+        }
+
+        challengeBuilder
+            .availableGods(godPool.toMap())
+            .lastUpdate(Instant.now())
+            .build();
+
+        Challenge newChallenge = challengeBuilder.build();
+
+        challengeRepository.updateChallenge(challenger.getId(), newChallenge);
+
+        ChallengeStatus status = ChallengeStatus.builder()
+                .ended(newChallenge.getStatus() == com.polydome.godemon.domain.entity.ChallengeStatus.FAILED)
+                .godToUsesLeft(godPool.toMap())
+                .godsLeftCount(godPool.distinctCount())
+                .wins(0)
+                .loses(0)
                 .build();
-
-        challengeRepository.updateChallenge(challenger.getId(), touchedChallenge);
-
-        ChallengeStatus status = matchRepository.findMatchesByChallenge(challenge.getId())
-                .reduce(initialStatus,
-                        this::matchToStatusReducer,
-                        this::statusCombiner);
 
         return new Result(null, status);
     }

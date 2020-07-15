@@ -113,7 +113,7 @@ public class Bot extends ListenerAdapter {
     private void onChallengeStatusRequested(MessageReceivedEvent event) {
         MessageChannel channel = event.getChannel();
 
-        GetChallengeStatusUseCase getChallengeStatusUseCase = new GetChallengeStatusUseCase(challengerRepository, challengeRepository, matchRepository, matchDetailsEndpoint);
+        GetChallengeStatusUseCase getChallengeStatusUseCase = new GetChallengeStatusUseCase(challengerRepository, challengeRepository, matchDetailsEndpoint);
         GetChallengeStatusUseCase.Result result = getChallengeStatusUseCase.execute(event.getAuthor().getIdLong());
 
         String message;
