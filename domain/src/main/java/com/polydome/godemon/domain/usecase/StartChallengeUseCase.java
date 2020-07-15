@@ -70,14 +70,10 @@ public class StartChallengeUseCase {
         );
 
         int[] gods = championRepository.getRandomIds(gameRulesProvider.getChallengeProposedGodsCount());
-        int rerolls = gameRulesProvider.getBaseRerolls();
 
-        propositionRepository.createProposition(challenger.getId(), gods, rerolls, messageId);
+        propositionRepository.createProposition(challenger.getId(), gods, messageId);
 
-        ChallengeProposition challengeProposition = new ChallengeProposition(
-            gods,
-            rerolls
-        );
+        ChallengeProposition challengeProposition = new ChallengeProposition(gods);
 
         return new Result(null, challengeProposition);
     }

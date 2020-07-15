@@ -1,12 +1,14 @@
 package com.polydome.godemon.data.dao;
 
-import com.polydome.godemon.domain.entity.*;
+import com.polydome.godemon.domain.entity.Challenge;
+import com.polydome.godemon.domain.entity.ChallengeStatus;
+import com.polydome.godemon.domain.entity.Challenger;
+import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
 import com.polydome.godemon.smitedata.implementation.SmiteGameModeService;
 
 import java.sql.*;
-import java.time.Instant;
 import java.util.*;
 
 public class ChallengeDAO implements ChallengeRepository, PropositionRepository {
@@ -138,7 +140,7 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
     }
 
     @Override
-    public void createProposition(long challengerId, int[] gods, int rerolls, long messageId) {
+    public void createProposition(long challengerId, int[] gods, long messageId) {
         try {
             selectChallengeByChallengerId.setLong(1, challengerId);
             ResultSet row = selectChallengeByChallengerId.executeQuery();

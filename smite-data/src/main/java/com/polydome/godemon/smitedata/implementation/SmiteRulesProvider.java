@@ -20,8 +20,4 @@ public class SmiteRulesProvider implements GameRulesProvider {
         return 3;
     }
 
-    @Override
-    public int getBaseRerolls() {
-        return 0;
-    }
 }
