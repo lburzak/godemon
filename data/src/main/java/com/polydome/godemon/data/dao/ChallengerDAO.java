@@ -26,7 +26,11 @@ public class ChallengerDAO implements ChallengerRepository {
             ResultSet row = findByDiscordIdStatement.executeQuery();
 
             if (row.next()) {
-                return new Challenger(row.getLong("discord_id"), row.getString("hirez_name"), row.getInt("hirez_id"));
+                return Challenger.builder()
+                        .id(row.getLong("discord_id"))
+                        .inGameName(row.getString("hirez_name"))
+                        .inGameId(row.getInt("hirez_id"))
+                        .build();
             }
         } catch (SQLException e) {
             e.printStackTrace();

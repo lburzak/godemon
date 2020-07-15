@@ -1,6 +1,7 @@
 package com.polydome.godemon.domain.usecase;
 
 import com.polydome.godemon.domain.entity.Challenge;
+import com.polydome.godemon.domain.entity.ChallengeStatus;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.model.ChallengeProposition;
@@ -11,6 +12,9 @@ import com.polydome.godemon.domain.repository.PropositionRepository;
 import com.polydome.godemon.domain.service.GameRulesProvider;
 import lombok.Data;
 
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static com.polydome.godemon.domain.usecase.StartChallengeUseCase.Error.*;
@@ -54,7 +58,16 @@ public class StartChallengeUseCase {
         if (propositionRepository.findPropositionByChallengerId(challenger.getId()) != null)
             return new Result(CHALLENGE_ALREADY_PROPOSED, null);
 
-        challengeRepository.createChallenge(challenger.getId(), Map.of(), gameMode);
+        challengeRepository.createChallenge(
+            Challenge.builder()
+                .id(0)
+                .availableGods(Collections.emptyMap())
+                .gameMode(gameMode)
+                .lastUpdate(Instant.now())
+                .participants(List.of(challenger))
+                .status(ChallengeStatus.PROPOSED)
+                .build()
+        );
 
         int[] gods = championRepository.getRandomIds(gameRulesProvider.getChallengeProposedGodsCount());
         int rerolls = gameRulesProvider.getBaseRerolls();

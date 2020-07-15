@@ -32,9 +32,18 @@ Table challenger {
     Note: 'Registered players'
 }
 
+Table participant {
+    challenge_id "int unsigned"
+    challenger_id "bigint unsigned"
+
+    indexes {
+        (challenge_id, challenger_id) [pk]
+    }
+    Note: 'Challenge participants'
+}
+
 Table challenge {
     id "int unsigned" [pk, auto_increment]
-    challenger_id "bigint unsigned" [not null, unique, ref: - challenger.discord_id]
     proposition_message_id "bigint unsigned" [null, note: 'Has value only if challange is in proposition stage']
     last_update timestamp [null],
     gamemode_id "int unsigned" [not null, note: 'Corresponds to Hi-Rez Queue ID']

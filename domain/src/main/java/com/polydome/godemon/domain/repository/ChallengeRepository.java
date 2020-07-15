@@ -7,6 +7,7 @@ import java.util.Map;
 
 public interface ChallengeRepository {
     Challenge findChallengeByChallengerId(long Id);
-    void createChallenge(long challengerId, Map<Integer, Integer> availableGods, GameMode gameMode);
+
     void updateChallenge(long challengerId, Challenge newChallenge);
+    void createChallenge(Challenge challenge);
 }

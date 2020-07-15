@@ -1,22 +1,18 @@
 package com.polydome.godemon.data.dao;
 
-import com.polydome.godemon.domain.entity.Challenge;
-import com.polydome.godemon.domain.entity.GameMode;
-import com.polydome.godemon.domain.entity.Proposition;
+import com.polydome.godemon.domain.entity.*;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
 import com.polydome.godemon.smitedata.implementation.SmiteGameModeService;
 
 import java.sql.*;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ChallengeDAO implements ChallengeRepository, PropositionRepository {
     private final PreparedStatement selectChampionsByChallengerId;
     private final PreparedStatement selectChallengeByChallengerId;
+    private final PreparedStatement selectParticipantsByChallengeId;
     private final PreparedStatement deleteAllChampionsOfChallengeStatement;
     private final PreparedStatement insertChampionStatement;
     private final PreparedStatement findPropositionMessageIdByChallengerIdStatement;
@@ -25,6 +21,7 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
     private final PreparedStatement insertChallengeStatement;
     private final PreparedStatement clearPropositionStatement;
     private final PreparedStatement updateChallengeLastUpdateStatement;
+    private final PreparedStatement insertParticipant;
     private final SmiteGameModeService gameModeService;
 
     public ChallengeDAO(Connection dbConnection, SmiteGameModeService gameModeService) throws SQLException {
@@ -33,7 +30,7 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
         selectChallengeByChallengerId =
                 dbConnection.prepareStatement("SELECT * FROM challenge WHERE challenge.challenger_id = ?");
         deleteAllChampionsOfChallengeStatement =
-                dbConnection.prepareStatement("DELETE FROM champion WHERE challenge_id = (SELECT id FROM challenge WHERE challenger_id = ?)");
+                dbConnection.prepareStatement("DELETE FROM champion WHERE challenge_id = ?");
         insertChampionStatement =
                 dbConnection.prepareStatement("INSERT INTO champion (challenge_id, god_id, uses_left) VALUES (?, ?, ?)");
         findPropositionMessageIdByChallengerIdStatement =
@@ -43,11 +40,15 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
         updatePropositionMessageIdStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET proposition_message_id = ? WHERE challenger_id = ?");
         insertChallengeStatement =
-                dbConnection.prepareStatement("INSERT INTO challenge (challenger_id, gamemode_id) VALUES (?, ?)");
+                dbConnection.prepareStatement("INSERT INTO challenge (last_update, gamemode_id) VALUES (?, ?)");
         clearPropositionStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET proposition_message_id = NULL WHERE challenger_id = ?");
         updateChallengeLastUpdateStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET last_update = ? WHERE challenger_id = ?");
+        selectParticipantsByChallengeId =
+                dbConnection.prepareStatement("SELECT id, hirez_id, hirez_name FROM challenger INNER JOIN challenge ON challenge.id = ?");
+        insertParticipant =
+                dbConnection.prepareStatement("INSERT INTO participant (challenge_id, challenger_id) VALUES (?, ?)");
         this.gameModeService = gameModeService;
     }
 
@@ -94,21 +95,41 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
     @Override
     public Challenge findChallengeByChallengerId(long id) {
         try {
+            var challengeBuilder = Challenge.builder();
+
             selectChallengeByChallengerId.setLong(1, id);
             ResultSet challengeRow = selectChallengeByChallengerId.executeQuery();
-            int challengeId = challengeRow.getInt("challenge_id");
             int gameModeId = challengeRow.getInt("gamemode_id");
-            Instant lastUpdate = challengeRow.getTimestamp("last_update").toInstant();
+            int challengeId = challengeRow.getInt("challenge_id");
+            challengeBuilder
+                    .id(challengeId)
+                    .gameMode(gameModeService.getGameModeFromId(gameModeId))
+                    .lastUpdate(challengeRow.getTimestamp("last_update").toInstant())
+                    .status(ChallengeStatus.ONGOING);
 
             selectChampionsByChallengerId.setLong(1, id);
             ResultSet championsRow = selectChampionsByChallengerId.executeQuery();
             Map<Integer, Integer> availableGods = new HashMap<>();
-
             while (championsRow.next()) {
                 availableGods.put(championsRow.getInt("god_id"), championsRow.getInt("uses_left"));
             }
+            challengeBuilder.availableGods(availableGods);
 
-            return new Challenge(challengeId, availableGods, gameModeService.getGameModeFromId(gameModeId), lastUpdate);
+            List<Challenger> participants = new LinkedList<>();
+            selectParticipantsByChallengeId.setInt(1, challengeId);
+            ResultSet participantRow = selectParticipantsByChallengeId.executeQuery();
+            while (participantRow.next()) {
+                participants.add(
+                    Challenger.builder()
+                            .id(participantRow.getInt("id"))
+                            .inGameName(participantRow.getString("hirez_id"))
+                            .inGameId(participantRow.getInt("hirez_name"))
+                        .build()
+                );
+            }
+            challengeBuilder.participants(participants);
+
+            return challengeBuilder.build();
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
@@ -140,27 +161,23 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
         }
     }
 
-    /**
-     * Replaces all champions assigned to a challenger with those listed in {@code availableGods}
-     * @param challengerId Id of challenger
-     * @param availableGods Map of champion id to uses left count
-     * @param gameMode `GameMode` linked to the challenge
-     */
     @Override
-    public void createChallenge(long challengerId, Map<Integer, Integer> availableGods, GameMode gameMode) {
+    public void createChallenge(Challenge challenge) {
         try {
-            insertChallengeStatement.setLong(1, challengerId);
-            insertChallengeStatement.setInt(2, gameModeService.getGameModeId(gameMode));
+            insertChallengeStatement.setTimestamp(1, Timestamp.from(challenge.getLastUpdate()));
+            insertChallengeStatement.setInt(2, gameModeService.getGameModeId(challenge.getGameMode()));
             insertChallengeStatement.execute();
 
-            deleteAllChampionsOfChallengeStatement.setLong(1, challengerId);
-            deleteAllChampionsOfChallengeStatement.execute();
-
-            for (var entry : availableGods.entrySet()) {
-                insertChampionStatement.setLong(1, challengerId);
+            for (var entry : challenge.getAvailableGods().entrySet()) {
+                insertChampionStatement.setInt(1, challenge.getId());
                 insertChampionStatement.setInt(2, entry.getKey());
                 insertChampionStatement.setInt(3, entry.getValue());
                 insertChampionStatement.execute();
+            }
+
+            for (var challenger : challenge.getParticipants()) {
+                insertParticipant.setInt(1, challenge.getId());
+                insertParticipant.setLong(2, challenger.getId());
             }
         } catch (SQLException throwable) {
             throwable.printStackTrace();
