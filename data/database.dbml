@@ -18,7 +18,7 @@ Table emote_host {
 
 Table emote {
     id "int unsigned" [pk, increment]
-    god_id "bigint unsigned" [ref: > god.id]
+    god_id "int unsigned" [ref: > god.id]
     display_id varchar(100) [not null, unique]
     hosted_id "bigint unsigned" [not null, unique]
     host_id "int unsigned" [not null, ref: > emote_host.id]
@@ -32,19 +32,8 @@ Table challenger {
     Note: 'Registered players'
 }
 
-Table participant {
-    challenge_id "int unsigned"
-    challenger_id "bigint unsigned"
-
-    indexes {
-        (challenge_id, challenger_id) [pk]
-    }
-    Note: 'Challenge participants'
-}
-
 Table challenge {
     id "int unsigned" [pk, auto_increment]
-    proposition_message_id "bigint unsigned" [null, note: 'Has value only if challange is in proposition stage']
     last_update timestamp [null],
     gamemode_id "int unsigned" [not null, note: 'Corresponds to Hi-Rez Queue ID']
     Note: 'Ongoing challenges'
@@ -53,7 +42,7 @@ Table challenge {
 Table champion {
     challenge_id "int unsigned" [ref: > challenge.id]
     god_id "int unsigned" [ref: > god.id]
-    uses_left "int unsigned" [not null, default: 1]
+    uses_left "int unsigned" [not null, default: 1, note: 'Value of `0` indicates proposed champion']
 
     indexes {
         (challenge_id, god_id) [pk]
