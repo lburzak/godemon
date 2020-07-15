@@ -1,7 +1,9 @@
 package com.polydome.godemon.discordbot;
 
 import com.polydome.godemon.domain.entity.GameMode;
+import com.polydome.godemon.domain.model.ChallengeProposition;
 import com.polydome.godemon.domain.repository.*;
+import com.polydome.godemon.domain.service.ChallengeService;
 import com.polydome.godemon.domain.service.GameRulesProvider;
 import com.polydome.godemon.domain.service.PlayerEndpoint;
 import com.polydome.godemon.domain.service.matchdetails.MatchDetailsEndpoint;
@@ -30,6 +32,7 @@ public class Bot extends ListenerAdapter {
     private final PlayerEndpoint playerEndpoint;
     private final MatchRepository matchRepository;
     private final MatchDetailsEndpoint matchDetailsEndpoint;
+    private final ChallengeService challengeService;
 
     private static class CommandInvocation {
 
@@ -113,7 +116,7 @@ public class Bot extends ListenerAdapter {
     private void onChallengeStatusRequested(MessageReceivedEvent event) {
         MessageChannel channel = event.getChannel();
 
-        GetChallengeStatusUseCase getChallengeStatusUseCase = new GetChallengeStatusUseCase(challengerRepository, challengeRepository, matchDetailsEndpoint);
+        GetChallengeStatusUseCase getChallengeStatusUseCase = new GetChallengeStatusUseCase(challengerRepository, challengeRepository, challengeService);
         GetChallengeStatusUseCase.Result result = getChallengeStatusUseCase.execute(event.getAuthor().getIdLong());
 
         String message;
@@ -151,32 +154,32 @@ public class Bot extends ListenerAdapter {
     }
 
     private void onChallengeRequested(MessageReceivedEvent event) {
-        MessageChannel channel = event.getChannel();
-
         StartChallengeUseCase startChallengeUseCase = new StartChallengeUseCase(
                 challengerRepository,
-                challengeRepository,
-                gameRulesProvider,
-                propositionRepository,
-                championRepository);
+                challengeRepository
+        );
 
-        channel.sendMessage("I'm picking some gods for you...").queue(
+        startChallengeUseCase.execute(event.getAuthor().getIdLong(), GameMode.RANKED_DUEL);
+
+        event.getChannel().sendMessage("Challenge created!").queue();
+    }
+
+    private void onChallengeJoin(MessageReceivedEvent event, String[] args) {
+        JoinChallengeUseCase joinChallengeUseCase = new JoinChallengeUseCase(challengeService, challengeRepository, challengerRepository, championRepository, gameRulesProvider, propositionRepository);
+
+        event.getChannel().sendMessage("I'm picking some gods for you...").queue(
                 message -> {
-                    StartChallengeUseCase.Result result = startChallengeUseCase.execute(
-                            event.getAuthor().getIdLong(),
-                            message.getIdLong(),
-                            GameMode.RANKED_DUEL
-                    );
+                    ChallengeProposition proposition = joinChallengeUseCase.withChallengeId(event.getAuthor().getIdLong(), Integer.parseInt(args[0]), message.getIdLong());
 
                     String content;
 
-                    if (result.getError() == null) {
+                    if (proposition != null) {
                         content = String.format(
                                 "%s, choose your first god from the following:",
                                 event.getAuthor().getAsMention()
                         );
 
-                        List<GodData> godsData = Arrays.stream(result.getProposition().getGods())
+                        List<GodData> godsData = Arrays.stream(proposition.getGods())
                                 .mapToObj(godsDataProvider::findById)
                                 .collect(Collectors.toList());
 
@@ -185,14 +188,6 @@ public class Bot extends ListenerAdapter {
                                 sentMessage.addReaction(godData.getEmoteId()).queue();
                             }
                         });
-                    } else {
-                        content = switch (result.getError()) {
-                            case CHALLENGE_ALREADY_ACTIVE -> "You are not done yet!";
-                            case CHALLENGER_NOT_REGISTERED -> "A Challenge? Don't you think I deserve a proper introduction first?";
-                            case CHALLENGE_ALREADY_PROPOSED -> "I've already gave you a proposition.";
-                        };
-
-                        message.editMessage(content).queue();
                     }
                 }
         );
@@ -215,7 +210,7 @@ public class Bot extends ListenerAdapter {
                 return;
             }
             AcceptChallengeUseCase.Result result =
-                    acceptChallengeUseCase.execute(event.getUserIdLong(), godData.getId());
+                    acceptChallengeUseCase.execute(event.getUserIdLong(), event.getMessageIdLong(), godData.getId());
 
             String content;
 

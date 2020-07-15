@@ -8,8 +8,6 @@ import com.polydome.godemon.domain.repository.ChallengerRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
 import lombok.Data;
 
-import static com.polydome.godemon.domain.usecase.AcceptChallengeUseCase.Error.*;
-
 public class AcceptChallengeUseCase {
     private final ChallengerRepository challengerRepository;
     private final ChallengeRepository challengeRepository;
@@ -24,7 +22,8 @@ public class AcceptChallengeUseCase {
     public enum Error {
         CHALLENGER_NOT_REGISTERED,
         CHALLENGE_ALREADY_ACTIVE,
-        CHALLENGER_HAS_NO_PROPOSITION
+        MESSAGE_IS_NOT_PROPOSITION,
+        CHALLENGER_IS_NOT_PARTICIPANT
     }
 
     @Data
@@ -33,22 +32,35 @@ public class AcceptChallengeUseCase {
         private final int firstGodId;
     }
 
-    public Result execute(long discordId, int choice) {
+    public Result execute(long discordId, long messageId, int godIdChoice) {
+        Proposition proposition = propositionRepository.findProposition(messageId);
+        if (proposition == null) {
+            return new Result(Error.MESSAGE_IS_NOT_PROPOSITION, 0);
+        }
+
         Challenger challenger = challengerRepository.findByDiscordId(discordId);
         if (challenger == null)
-            return new Result(CHALLENGER_NOT_REGISTERED, 0);
+            return new Result(Error.CHALLENGER_NOT_REGISTERED, 0);
 
-        Proposition proposition = propositionRepository.findPropositionByChallengerId(challenger.getId());
-        if (proposition == null)
-            return new Result(CHALLENGER_HAS_NO_PROPOSITION, 0);
+        Challenge challenge = challengeRepository.findChallenge(proposition.getChallengeId());
+        if (challenge == null) {
+            throw new IllegalStateException("Interaction with orphan proposition occurred");
+        }
 
-        Challenge challenge = challengeRepository.findChallengeByChallengerId(challenger.getId());
-        challenge.getAvailableGods().clear();
-        challenge.getAvailableGods().put(choice, 1);
+        if (challenge.getParticipants().stream().noneMatch(participant -> participant.getId() == discordId)) {
+            return new Result(Error.CHALLENGER_IS_NOT_PARTICIPANT, 0);
+        }
 
-        challengeRepository.updateChallenge(challenger.getId(), challenge);
-        propositionRepository.deleteProposition(challenger.getId());
+        GodPool godPool = new GodPool(challenge.getAvailableGods());
+        godPool.grantOne(godIdChoice);
 
-        return new Result(null, challenge.getAvailableGods().keySet().iterator().next());
+        challengeRepository.updateChallenge(challenge.toBuilder()
+                .availableGods(godPool.toMap())
+                .build()
+        );
+
+        propositionRepository.deleteProposition(messageId);
+
+        return new Result(null, godIdChoice);
     }
 }

@@ -16,4 +16,5 @@ public class MatchParticipantStats {
     @Json(name = "Deaths") public final byte deaths;
     @Json(name = "GodId") public final int godId;
     @Json(name = "Win_Status") public final WinStatus winStatus;
+    @Json(name = "Match") public final int matchId;
 }

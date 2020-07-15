@@ -32,8 +32,9 @@ public class SmiteMatchDetailsEndpoint implements MatchDetailsEndpoint {
         );
     }
 
-    private MatchDetails participantStatsListToMatchDetails(List<MatchParticipantStats> stats) {
+    private MatchDetails participantStatsListToMatchDetails(List<MatchParticipantStats> stats, int matchId) {
         return new MatchDetails(
+                matchId,
                 (byte) stats.size(),
                 stats.stream()
                         .map(this::matchParticipantStatsToPlayerRecord)
@@ -56,7 +57,7 @@ public class SmiteMatchDetailsEndpoint implements MatchDetailsEndpoint {
                 .filter(match -> match.getQueue() == modeToQueue(mode))
                 .map(RecentMatch::getId)
                 .flatMapMaybe(smiteApiClient::getMatchDetails)
-                .map(this::participantStatsListToMatchDetails)
+                .map((List<MatchParticipantStats> stats) -> participantStatsListToMatchDetails(stats, stats.get(0).matchId))
                 .collectInto((List<MatchDetails>) new LinkedList<MatchDetails>(), List::add)
                 .blockingGet();
     }

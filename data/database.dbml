@@ -39,10 +39,36 @@ Table challenge {
     Note: 'Ongoing challenges'
 }
 
+Table participant {
+    challenge_id "int unsigned" [ref: > challenge.id]
+    challenger_id "bigint unsigned" [ref: > challenger.id]
+
+    indexes {
+        (challenge_id, challenger_id) [pk]
+    }
+    Note: 'Challenge participants'
+}
+
+Table proposition_message {
+    id "bigint unsigned" [pk]
+    requester_id "bigint unsigned" [not null, unique, ref: > challenger.id]
+    challenge_id "int unsigned" [not null, ref: > challenge.id]
+}
+
+Table proposed_champion {
+    proposition_message_id "bigint unsigned"
+    god_id "int unsigned"
+
+    indexes {
+        (proposition_message, proposed_champion) [pk]
+    }
+    Note: 'Champions to choose from when accepting a propostion'
+}
+
 Table champion {
     challenge_id "int unsigned" [ref: > challenge.id]
     god_id "int unsigned" [ref: > god.id]
-    uses_left "int unsigned" [not null, default: 1, note: 'Value of `0` indicates proposed champion']
+    uses_left "int unsigned" [not null, default: 1]
 
     indexes {
         (challenge_id, god_id) [pk]

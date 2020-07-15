@@ -3,25 +3,22 @@ package com.polydome.godemon.data.dao;
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.ChallengeStatus;
 import com.polydome.godemon.domain.entity.Challenger;
-import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
-import com.polydome.godemon.domain.repository.PropositionRepository;
 import com.polydome.godemon.smitedata.implementation.SmiteGameModeService;
 
 import java.sql.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-public class ChallengeDAO implements ChallengeRepository, PropositionRepository {
+public class ChallengeDAO implements ChallengeRepository {
     private final PreparedStatement selectChampionsByChallengerId;
     private final PreparedStatement selectChallengeByChallengerId;
     private final PreparedStatement selectParticipantsByChallengeId;
     private final PreparedStatement deleteAllChampionsOfChallengeStatement;
     private final PreparedStatement insertChampionStatement;
-    private final PreparedStatement findPropositionMessageIdByChallengerIdStatement;
-    private final PreparedStatement findGodsIdsByChallengerIdStatement;
-    private final PreparedStatement updatePropositionMessageIdStatement;
     private final PreparedStatement insertChallengeStatement;
-    private final PreparedStatement clearPropositionStatement;
     private final PreparedStatement updateChallengeLastUpdateStatement;
     private final PreparedStatement insertParticipant;
     private final SmiteGameModeService gameModeService;
@@ -35,16 +32,8 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
                 dbConnection.prepareStatement("DELETE FROM champion WHERE challenge_id = ?");
         insertChampionStatement =
                 dbConnection.prepareStatement("INSERT INTO champion (challenge_id, god_id, uses_left) VALUES (?, ?, ?)");
-        findPropositionMessageIdByChallengerIdStatement =
-                dbConnection.prepareStatement("SELECT id, proposition_message_id FROM challenge WHERE challenger_id = ?");
-        findGodsIdsByChallengerIdStatement =
-                dbConnection.prepareStatement("SELECT god_id FROM champion WHERE challenge_id = ?");
-        updatePropositionMessageIdStatement =
-                dbConnection.prepareStatement("UPDATE challenge SET proposition_message_id = ? WHERE challenger_id = ?");
         insertChallengeStatement =
                 dbConnection.prepareStatement("INSERT INTO challenge (last_update, gamemode_id) VALUES (?, ?)");
-        clearPropositionStatement =
-                dbConnection.prepareStatement("UPDATE challenge SET proposition_message_id = NULL WHERE challenger_id = ?");
         updateChallengeLastUpdateStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET last_update = ? WHERE challenger_id = ?");
         selectParticipantsByChallengeId =
@@ -52,46 +41,6 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
         insertParticipant =
                 dbConnection.prepareStatement("INSERT INTO participant (challenge_id, challenger_id) VALUES (?, ?)");
         this.gameModeService = gameModeService;
-    }
-
-    @Override
-    public Proposition findPropositionByChallengerId(long id) {
-        try {
-            findPropositionMessageIdByChallengerIdStatement.setLong(1, id);
-            ResultSet row = findPropositionMessageIdByChallengerIdStatement.executeQuery();
-
-            if (row.next()) {
-                int challengeId = row.getInt("id");
-                long messageId = row.getLong("proposition_message_id");
-
-                if (messageId == 0) {
-                    return null;
-                }
-
-                findGodsIdsByChallengerIdStatement.setInt(1, challengeId);
-                row = findGodsIdsByChallengerIdStatement.executeQuery();
-
-                List<Integer> godsIds = new ArrayList<>();
-
-                while (row.next()) {
-                    godsIds.add(row.getInt("god_id"));
-                }
-
-                int[] godsIdsArray = new int[godsIds.size()];
-
-                var iter = godsIds.iterator();
-                int i = 0;
-                while (iter.hasNext()) {
-                    godsIdsArray[i++] = iter.next();
-                }
-
-                return new Proposition(id, godsIdsArray, 0, messageId);
-            }
-        } catch (SQLException throwable) {
-            throwable.printStackTrace();
-        }
-
-        return null;
     }
 
     @Override
@@ -140,30 +89,6 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
     }
 
     @Override
-    public void createProposition(long challengerId, int[] gods, long messageId) {
-        try {
-            selectChallengeByChallengerId.setLong(1, challengerId);
-            ResultSet row = selectChallengeByChallengerId.executeQuery();
-
-            row.next();
-            int challengeId = row.getInt("id");
-
-            for (int god : gods) {
-                insertChampionStatement.setLong(1, challengeId);
-                insertChampionStatement.setInt(2, god);
-                insertChampionStatement.setInt(3, 0);
-                insertChampionStatement.execute();
-            }
-
-            updatePropositionMessageIdStatement.setLong(1, messageId);
-            updatePropositionMessageIdStatement.setLong(2, challengerId);
-            updatePropositionMessageIdStatement.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
     public void createChallenge(Challenge challenge) {
         try {
             insertChallengeStatement.setTimestamp(1, Timestamp.from(challenge.getLastUpdate()));
@@ -187,7 +112,7 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
     }
 
     @Override
-    public void updateChallenge(long challengerId, Challenge newChallenge) {
+    public void updateChallenge(Challenge challenge) {
         try {
             selectChallengeByChallengerId.setLong(1, challengerId);
             ResultSet row = selectChallengeByChallengerId.executeQuery();
@@ -198,25 +123,15 @@ public class ChallengeDAO implements ChallengeRepository, PropositionRepository 
             deleteAllChampionsOfChallengeStatement.setLong(1, challengerId);
             deleteAllChampionsOfChallengeStatement.execute();
 
-            for (var entry : newChallenge.getAvailableGods().entrySet()) {
+            for (var entry : challenge.getAvailableGods().entrySet()) {
                     insertChampionStatement.setLong(1, challengeId);
                     insertChampionStatement.setInt(2, entry.getKey());
                     insertChampionStatement.setInt(3, entry.getValue());
                     insertChampionStatement.execute();
             }
 
-            updateChallengeLastUpdateStatement.setTimestamp(1, Timestamp.from(newChallenge.getLastUpdate()));
+            updateChallengeLastUpdateStatement.setTimestamp(1, Timestamp.from(challenge.getLastUpdate()));
             updateChallengeLastUpdateStatement.setInt(2, challengeId);
-        } catch (SQLException throwable) {
-            throwable.printStackTrace();
-        }
-    }
-
-    @Override
-    public void deleteProposition(long challengerId) {
-        try {
-            clearPropositionStatement.setLong(1, challengerId);
-            clearPropositionStatement.execute();
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
