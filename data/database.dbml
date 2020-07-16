@@ -33,8 +33,8 @@ Table challenger {
 }
 
 Table challenge {
-    id "int unsigned" [pk, auto_increment]
-    last_update timestamp [null],
+    id "int unsigned" [pk, increment]
+    last_update timestamp [null]
     gamemode_id "int unsigned" [not null, note: 'Corresponds to Hi-Rez Queue ID']
     Note: 'Ongoing challenges'
 }
@@ -56,11 +56,11 @@ Table proposition_message {
 }
 
 Table proposed_champion {
-    proposition_message_id "bigint unsigned"
+    proposition_message_id "bigint unsigned" [ref: > proposition_message.id]
     god_id "int unsigned"
 
     indexes {
-        (proposition_message, god_id) [pk]
+        (proposition_message_id, god_id) [pk]
     }
     Note: 'Champions to choose from when accepting a propostion'
 }
@@ -79,7 +79,7 @@ Table champion {
 Table match {
     challenge_id "int unsigned" [ref: > challenge.id]
     own_god_id "int unsigned" [ref: > god.id]
-    opponent_god_id "int unsigned" [ref: god.id]
+    opponent_god_id "int unsigned" [ref: > god.id]
     win bit(1)
     kills "tinyint unsigned"
     deaths "tinyint unsigned"
