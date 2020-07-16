@@ -31,7 +31,7 @@ public class ChallengeDAO implements ChallengeRepository {
         selectParticipantsByChallengeId =
                 dbConnection.prepareStatement("SELECT challenger.* FROM challenger INNER JOIN participant ON challenger.discord_id = participant.challenger_id WHERE challenge_id = ?");
         insertParticipant =
-                dbConnection.prepareStatement("INSERT INTO participant (challenge_id, challenger_id) VALUES (?, ?)");
+                dbConnection.prepareStatement("INSERT IGNORE INTO participant (challenge_id, challenger_id) VALUES (?, ?)");
         insertOrUpdateChampion =
                 dbConnection.prepareStatement("INSERT INTO champion (challenge_id, god_id, uses_left) VALUES (?, ? ,?) ON DUPLICATE KEY UPDATE uses_left = ?");
         deleteChampion =
