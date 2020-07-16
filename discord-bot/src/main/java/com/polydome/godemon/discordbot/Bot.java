@@ -17,11 +17,13 @@ import lombok.AllArgsConstructor;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import javax.annotation.Nonnull;
+import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -95,7 +97,7 @@ public class Bot extends ListenerAdapter {
     }
 
     private String createGodLabel(GodData godData, int usesLeft) {
-        return String.format("`%dx` <%s> **%s**", usesLeft, godData.getEmoteId(), godData.getName());
+        return String.format("`%dx` <%s> **%3$20s**", usesLeft, godData.getEmoteId(), godData.getName());
     }
 
     private void onAvailableGodsRequested(MessageReceivedEvent event) {
@@ -128,6 +130,38 @@ public class Bot extends ListenerAdapter {
             onChallengeAccepted(event);
     }
 
+    private MessageEmbed challengeStatusToEmbed(ChallengeStatus status) {
+        EmbedBuilder builder = new EmbedBuilder();
+
+        builder.setTitle("Challenge");
+
+        builder.addField("Participants", "Alpha\nBeta\nGamma\nDelta", true);
+        builder.addField("Stats", String.format("Wins %d\nLoses %d\nKills %d\nDeaths %d", status.getWins(), status.getLoses(), 11, 37), true);
+
+        builder.addBlankField(false);
+        GodData godData;
+
+        final int COLUMNS = 3;
+        final int rows = status.getGodsLeftCount() / COLUMNS;
+
+        int row = 1;
+        StringBuilder godsColumn = new StringBuilder();
+        for (var entry : status.getGodToUsesLeft().entrySet()) {
+            godData = godsDataProvider.findById(entry.getKey());
+            godsColumn.append(createGodLabel(godData, entry.getValue())).append("\n");
+
+            if (row == rows) {
+                builder.addField("", godsColumn.toString(), true);
+                godsColumn = new StringBuilder();
+                row = 1;
+            }
+
+            row++;
+        }
+
+        return builder.build();
+    }
+
     private void onChallengeStatusRequested(MessageReceivedEvent event, int challengeId) {
         GetChallengeStatusUseCase getChallengeStatusUseCase = new GetChallengeStatusUseCase(challengerRepository, challengeRepository, challengeService);
 
@@ -135,16 +169,18 @@ public class Bot extends ListenerAdapter {
 
         try {
             ChallengeStatus status = getChallengeStatusUseCase.execute(event.getAuthor().getIdLong(), challengeId);
-            replyContent = status.toString();
+            event.getChannel().sendMessage(challengeStatusToEmbed(status)).queue();
         } catch (AuthenticationException e) {
             replyContent = String.format("%s, please register with `;godemon me <SMITE_USERNAME>.`", event.getAuthor().getAsMention());
+            event.getChannel().sendMessage(replyContent).queue();
         } catch (NoSuchChallengeException e) {
             replyContent = String.format("%s, such challenge doesn't exist!", event.getAuthor().getAsMention());
+            event.getChannel().sendMessage(replyContent).queue();
         } catch (ActionForbiddenException e) {
             replyContent = String.format("%s, you do not participate in that challenge.", event.getAuthor().getAsMention());
+            event.getChannel().sendMessage(replyContent).queue();
         }
 
-        event.getChannel().sendMessage(replyContent).queue();
     }
 
     private void onIntroduction(MessageReceivedEvent event, String[] args) {
