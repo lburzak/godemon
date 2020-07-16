@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class GetAvailableChallengesUseCase {
     private final ChallengeRepository challengeRepository;
 
-    List<ChallengeBrief> withChallengerId(long id) {
+    public List<ChallengeBrief> withChallengerId(long id) {
         List<Challenge> challenges = challengeRepository.findChallengesByParticipant(id);
 
         return challenges.stream()

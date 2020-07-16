@@ -3,6 +3,7 @@ package com.polydome.godemon.discordbot;
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.exception.ActionForbiddenException;
 import com.polydome.godemon.domain.exception.AuthenticationException;
+import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeProposition;
 import com.polydome.godemon.domain.repository.*;
 import com.polydome.godemon.domain.service.ChallengeService;
@@ -74,7 +75,7 @@ public class Bot extends ListenerAdapter {
         }
 
         switch (commandInvocation.command) {
-            case "challenge" -> onChallengeStatusRequested(event);
+            case "challenge" -> onChallengesListRequested(event);
             case "me" -> onIntroduction(event, commandInvocation.args);
             case "request" -> onChallengeRequested(event);
             case "gods" -> onAvailableGodsRequested(event);
@@ -235,6 +236,28 @@ public class Bot extends ListenerAdapter {
 
             message.clearReactions().queue();
         });
+    }
+
+    private String createChallengeLabel(ChallengeBrief challengeBrief) {
+        return String.format("%d   %s", challengeBrief.getId(), challengeBrief.getLastUpdate().toString());
+    }
+
+    private void onChallengesListRequested(MessageReceivedEvent event) {
+        List<ChallengeBrief> challenges =
+                (new GetAvailableChallengesUseCase(challengeRepository)).withChallengerId(event.getAuthor().getIdLong());
+
+        StringBuilder contentBuilder = new StringBuilder();
+
+        for (final var challenge : challenges) {
+            contentBuilder.append(createChallengeLabel(challenge)).append("\n");
+        }
+
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        embedBuilder
+                .setTitle(String.format("%s's challenges", event.getAuthor().getName()))
+                .setDescription(contentBuilder.toString());
+
+        event.getChannel().sendMessage(embedBuilder.build()).queue();
     }
 
 }
