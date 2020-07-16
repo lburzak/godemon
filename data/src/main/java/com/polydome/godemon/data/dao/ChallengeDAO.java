@@ -92,10 +92,9 @@ public class ChallengeDAO implements ChallengeRepository {
             selectParticipantsByChallengeId.setInt(1, id);
             ResultSet participantRow = selectParticipantsByChallengeId.executeQuery();
             while (participantRow.next()) {
-                participantRow.getInt("id");
                 participants.add(
                         Challenger.builder()
-                                .id(participantRow.getInt("id"))
+                                .id(participantRow.getLong("discord_id"))
                                 .inGameId(participantRow.getInt("hirez_id"))
                                 .inGameName(participantRow.getString("hirez_name"))
                                 .build()
