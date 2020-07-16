@@ -94,10 +94,10 @@ public class PropositionDAO implements PropositionRepository {
     @Override
     public void deleteProposition(long messageId) {
         try {
-            deleteProposition.setLong(1, messageId);
-            deleteProposition.execute();
-
             deleteProposedChampions.setLong(1, messageId);
+            deleteProposedChampions.execute();
+
+            deleteProposition.setLong(1, messageId);
             deleteProposition.execute();
         } catch (SQLException e) {
             e.printStackTrace();

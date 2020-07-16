@@ -28,7 +28,7 @@ public class StartChallengeUseCase {
                 .availableGods(Collections.emptyMap())
                 .gameMode(gameMode)
                 .lastUpdate(Instant.now())
-                .participants(List.of(challenger))
+                .participants(List.of())
                 .status(ChallengeStatus.PROPOSED)
                 .build()
         );

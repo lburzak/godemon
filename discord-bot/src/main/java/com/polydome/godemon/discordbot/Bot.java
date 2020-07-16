@@ -210,22 +210,18 @@ public class Bot extends ListenerAdapter {
                 System.out.println("God not found: " + emoteId);
                 return;
             }
-            AcceptChallengeUseCase.Result result =
-                    acceptChallengeUseCase.execute(event.getUserIdLong(), event.getMessageIdLong(), godData.getId());
+
+            acceptChallengeUseCase.execute(event.getUserIdLong(), event.getMessageIdLong(), godData.getId());
 
             String content;
 
-            if (result.getError() == null) {
-                content = String.format(
-                        "%s, Your starting god is `%s`! Good luck!",
-                        event.getUser().getAsMention(), godData.getName()
-                );
-                message.editMessage(content).queue();
+            content = String.format(
+                    "%s, Your starting god is `%s`! Good luck!",
+                    event.getUser().getAsMention(), godData.getName()
+            );
+            message.editMessage(content).queue();
 
-                message.clearReactions().queue();
-            } else {
-                System.err.println("Challenge already active");
-            }
+            message.clearReactions().queue();
         });
     }
 

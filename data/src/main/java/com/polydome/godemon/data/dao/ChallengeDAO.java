@@ -19,7 +19,7 @@ public class ChallengeDAO implements ChallengeRepository {
     private final PreparedStatement updateChallengeLastUpdateStatement;
     private final PreparedStatement insertParticipant;
     private final PreparedStatement insertOrUpdateChampion;
-    private final PreparedStatement deleteChampionsNotInArray;
+    private final PreparedStatement deleteChampion;
     private final PreparedStatement selectChallengeById;
     private final SmiteGameModeService gameModeService;
     private final Connection connection;
@@ -38,15 +38,15 @@ public class ChallengeDAO implements ChallengeRepository {
         insertChallengeStatement =
                 dbConnection.prepareStatement("INSERT INTO challenge (last_update, gamemode_id) VALUES (?, ?)");
         updateChallengeLastUpdateStatement =
-                dbConnection.prepareStatement("UPDATE challenge SET last_update = ? WHERE challenger_id = ?");
+                dbConnection.prepareStatement("UPDATE challenge SET last_update = ? WHERE id = ?");
         selectParticipantsByChallengeId =
                 dbConnection.prepareStatement("SELECT id, hirez_id, hirez_name FROM challenger INNER JOIN challenge ON challenge.id = ?");
         insertParticipant =
                 dbConnection.prepareStatement("INSERT INTO participant (challenge_id, challenger_id) VALUES (?, ?)");
         insertOrUpdateChampion =
                 dbConnection.prepareStatement("INSERT INTO champion (challenge_id, god_id, uses_left) VALUES (?, ? ,?) ON DUPLICATE KEY UPDATE uses_left = ?");
-        deleteChampionsNotInArray =
-                dbConnection.prepareStatement("DELETE FROM champion WHERE god_id NOT IN ?");
+        deleteChampion =
+                dbConnection.prepareStatement("DELETE FROM champion WHERE god_id = ?");
         selectChallengeById =
                 dbConnection.prepareStatement("SELECT id, gamemode_id, last_update FROM challenge WHERE id = ?");
         selectChampionsByChallengeId =
@@ -149,6 +149,7 @@ public class ChallengeDAO implements ChallengeRepository {
             selectParticipantsByChallengeId.setInt(1, id);
             ResultSet participantRow = selectParticipantsByChallengeId.executeQuery();
             while (participantRow.next()) {
+                participantRow.getInt("id");
                 participants.add(
                         Challenger.builder()
                                 .id(participantRow.getInt("id"))
@@ -170,18 +171,35 @@ public class ChallengeDAO implements ChallengeRepository {
     @Override
     public void updateChallenge(Challenge challenge) {
         try {
-            Array availableIds = connection
-                    .createArrayOf("UNSIGNED INT", challenge.getAvailableGods().keySet().toArray());
+            selectChampionsByChallengeId.setInt(1, challenge.getId());
+            ResultSet resultSet = selectChampionsByChallengeId.executeQuery();
 
-            deleteChampionsNotInArray.setArray(1, availableIds);
-            deleteChampionsNotInArray.execute();
+            Set<Integer> availableGodsIds = challenge.getAvailableGods().keySet();
+            Set<Integer> idsToBeRemoved = new HashSet<>();
+            int id;
+            while (resultSet.next()) {
+                id = resultSet.getInt("god_id");
+                if (!availableGodsIds.contains(id))
+                    idsToBeRemoved.add(id);
+            }
+
+            for (final var godId : idsToBeRemoved) {
+                deleteChampion.setInt(1, godId);
+                deleteChampion.execute();
+            }
 
             for (var entry : challenge.getAvailableGods().entrySet()) {
                 insertOrUpdateChampion.setLong(1, challenge.getId());
                 insertOrUpdateChampion.setInt(2, entry.getKey());
                 insertOrUpdateChampion.setInt(3, entry.getValue());
                 insertOrUpdateChampion.setInt(4, entry.getValue());
-                insertChampionStatement.execute();
+                insertOrUpdateChampion.execute();
+            }
+
+            for (var challenger : challenge.getParticipants()) {
+                insertParticipant.setInt(1, challenge.getId());
+                insertParticipant.setLong(2, challenger.getId());
+                insertParticipant.execute();
             }
 
             updateChallengeLastUpdateStatement.setTimestamp(1, Timestamp.from(challenge.getLastUpdate()));
