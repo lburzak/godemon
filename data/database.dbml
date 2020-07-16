@@ -41,7 +41,7 @@ Table challenge {
 
 Table participant {
     challenge_id "int unsigned" [ref: > challenge.id]
-    challenger_id "bigint unsigned" [ref: > challenger.id]
+    challenger_id "bigint unsigned" [ref: > challenger.discord_id]
 
     indexes {
         (challenge_id, challenger_id) [pk]
@@ -51,7 +51,7 @@ Table participant {
 
 Table proposition_message {
     id "bigint unsigned" [pk]
-    requester_id "bigint unsigned" [not null, unique, ref: > challenger.id]
+    requester_id "bigint unsigned" [not null, unique, ref: > challenger.discord_id]
     challenge_id "int unsigned" [not null, ref: > challenge.id]
 }
 
