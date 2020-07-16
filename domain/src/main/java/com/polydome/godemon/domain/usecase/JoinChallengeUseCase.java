@@ -11,6 +11,7 @@ import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
 import com.polydome.godemon.domain.repository.ChampionRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
+import com.polydome.godemon.domain.repository.exception.NoSuchEntityException;
 import com.polydome.godemon.domain.service.ChallengeService;
 import com.polydome.godemon.domain.service.GameRulesProvider;
 import lombok.AllArgsConstructor;
@@ -25,9 +26,13 @@ public class JoinChallengeUseCase {
     private final PropositionRepository propositionRepository;
 
     public ChallengeProposition withChallengeId(long discordId, int challengeId, long messageId) throws AuthenticationException, ActionForbiddenException {
-        Challenger challenger = challengerRepository.findByDiscordId(discordId);
-        if (challenger == null)
+        Challenger challenger;
+
+        try {
+            challenger = challengerRepository.findByDiscordId(discordId);
+        } catch (NoSuchEntityException e) {
             throw new AuthenticationException("Challenger not registered");
+        }
 
         // TODO: Check if challenge exists
 

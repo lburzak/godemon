@@ -2,6 +2,8 @@ package com.polydome.godemon.data.dao;
 
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
+import com.polydome.godemon.domain.repository.exception.CRUDException;
+import com.polydome.godemon.domain.repository.exception.NoSuchEntityException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,12 +33,12 @@ public class ChallengerDAO implements ChallengerRepository {
                         .inGameName(row.getString("hirez_name"))
                         .inGameId(row.getInt("hirez_id"))
                         .build();
+            } else {
+                throw new NoSuchEntityException(Challenger.class, String.valueOf(id));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new CRUDException(e);
         }
-
-        return null;
     }
 
     @Override

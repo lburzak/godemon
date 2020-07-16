@@ -8,4 +8,8 @@ public class CRUDException extends RuntimeException {
     public CRUDException(String message) {
         super(message);
     }
+
+    public CRUDException(Throwable cause) {
+        super(cause);
+    }
 }

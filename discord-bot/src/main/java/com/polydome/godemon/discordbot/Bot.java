@@ -2,6 +2,7 @@ package com.polydome.godemon.discordbot;
 
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.exception.ActionForbiddenException;
+import com.polydome.godemon.domain.exception.AuthenticationException;
 import com.polydome.godemon.domain.model.ChallengeProposition;
 import com.polydome.godemon.domain.repository.*;
 import com.polydome.godemon.domain.service.ChallengeService;
@@ -177,6 +178,10 @@ public class Bot extends ListenerAdapter {
                         proposition = joinChallengeUseCase.withChallengeId(event.getAuthor().getIdLong(), Integer.parseInt(args[0]), message.getIdLong());
                     } catch (ActionForbiddenException e) {
                         String messageContent = String.format("%s, you participate in this challenge already.", event.getAuthor().getAsMention());
+                        message.editMessage(messageContent).queue();
+                        return;
+                    } catch (AuthenticationException e) {
+                        String messageContent = String.format("%s, please register with `;godemon me <SMITE_USERNAME>`", event.getAuthor().getAsMention());
                         message.editMessage(messageContent).queue();
                         return;
                     }
