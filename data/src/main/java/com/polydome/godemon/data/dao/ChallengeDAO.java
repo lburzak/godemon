@@ -1,6 +1,7 @@
 package com.polydome.godemon.data.dao;
 
 import com.polydome.godemon.domain.entity.Challenge;
+import com.polydome.godemon.domain.entity.ChallengeStatus;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.exception.CRUDException;
@@ -20,6 +21,7 @@ public class ChallengeDAO implements ChallengeRepository {
     private final PreparedStatement selectChallengeById;
     private final SmiteGameModeService gameModeService;
     private final PreparedStatement selectChampionsByChallengeId;
+    private final PreparedStatement selectChallengesByParticipantId;
 
     public ChallengeDAO(Connection dbConnection, SmiteGameModeService gameModeService) throws SQLException {
         insertChampionStatement =
@@ -40,6 +42,8 @@ public class ChallengeDAO implements ChallengeRepository {
                 dbConnection.prepareStatement("SELECT id, gamemode_id, last_update FROM challenge WHERE id = ?");
         selectChampionsByChallengeId =
                 dbConnection.prepareStatement("SELECT god_id, uses_left FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenge.id = ?");
+        selectChallengesByParticipantId =
+                dbConnection.prepareStatement("SELECT challenge.* FROM challenge INNER JOIN participant ON challenge.id = participant.challenge_id WHERE participant.challenger_id = ?");
         this.gameModeService = gameModeService;
     }
 
@@ -80,33 +84,44 @@ public class ChallengeDAO implements ChallengeRepository {
                         .gameMode(gameModeService.getGameModeFromId(resultSet.getInt("gamemode_id")))
                         .id(resultSet.getInt(id));
             }
-
-            selectChampionsByChallengeId.setLong(1, id);
-            ResultSet championsRow = selectChampionsByChallengeId.executeQuery();
-            Map<Integer, Integer> availableGods = new HashMap<>();
-            while (championsRow.next()) {
-                availableGods.put(championsRow.getInt("god_id"), championsRow.getInt("uses_left"));
-            }
-            challengeBuilder.availableGods(availableGods);
-
-            List<Challenger> participants = new LinkedList<>();
-            selectParticipantsByChallengeId.setInt(1, id);
-            ResultSet participantRow = selectParticipantsByChallengeId.executeQuery();
-            while (participantRow.next()) {
-                participants.add(
-                        Challenger.builder()
-                                .id(participantRow.getLong("discord_id"))
-                                .inGameId(participantRow.getInt("hirez_id"))
-                                .inGameName(participantRow.getString("hirez_name"))
-                                .build()
-                );
-            }
-            challengeBuilder.participants(participants);
+            
+            challengeBuilder.availableGods(findAvailableGods(id));
+            challengeBuilder.participants(findParticipants(id));
 
             return challengeBuilder.build();
         } catch (SQLException e) {
             throw new CRUDException("Internal query failure", e);
         }
+    }
+
+    private Map<Integer, Integer> findAvailableGods(int challengeId) throws SQLException {
+        selectChampionsByChallengeId.setLong(1, challengeId);
+        ResultSet championsRow = selectChampionsByChallengeId.executeQuery();
+
+        Map<Integer, Integer> availableGods = new HashMap<>();
+
+        while (championsRow.next()) {
+            availableGods.put(championsRow.getInt("god_id"), championsRow.getInt("uses_left"));
+        }
+
+        return availableGods;
+    }
+
+    private List<Challenger> findParticipants(int challengeId) throws SQLException {
+        List<Challenger> participants = new LinkedList<>();
+        selectParticipantsByChallengeId.setInt(1, challengeId);
+        ResultSet participantRow = selectParticipantsByChallengeId.executeQuery();
+        while (participantRow.next()) {
+            participants.add(
+                    Challenger.builder()
+                            .id(participantRow.getLong("discord_id"))
+                            .inGameId(participantRow.getInt("hirez_id"))
+                            .inGameName(participantRow.getString("hirez_name"))
+                            .build()
+            );
+        }
+        
+        return participants;
     }
 
     @Override
@@ -148,6 +163,36 @@ public class ChallengeDAO implements ChallengeRepository {
             updateChallengeLastUpdateStatement.execute();
         } catch (SQLException e) {
             throw new CRUDException("Internal query failure", e);
+        }
+    }
+
+    @Override
+    public List<Challenge> findChallengesByParticipant(long participantId) throws CRUDException {
+        ResultSet resultSet;
+        try {
+            selectChallengesByParticipantId.setLong(1, participantId);
+            resultSet = selectChallengesByParticipantId.executeQuery();
+
+            int id;
+            List<Challenge> challenges = new LinkedList<>();
+
+            while (resultSet.next()) {
+                id = resultSet.getInt("id");
+                challenges.add(
+                    Challenge.builder()
+                        .id(id)
+                        .participants(findParticipants(id))
+                        .gameMode(gameModeService.getGameModeFromId(resultSet.getInt("gamemode_id")))
+                        .lastUpdate(resultSet.getTimestamp("last_update").toInstant())
+                        .status(ChallengeStatus.ONGOING)
+                        .availableGods(findAvailableGods(id))
+                        .build()
+                );
+            }
+
+            return challenges;
+        } catch (SQLException e) {
+            throw new CRUDException(e);
         }
     }
 }
