@@ -5,6 +5,7 @@ import com.polydome.godemon.domain.exception.ActionForbiddenException;
 import com.polydome.godemon.domain.exception.AuthenticationException;
 import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeProposition;
+import com.polydome.godemon.domain.model.ChallengeStatus;
 import com.polydome.godemon.domain.repository.*;
 import com.polydome.godemon.domain.service.ChallengeService;
 import com.polydome.godemon.domain.service.GameRulesProvider;
@@ -75,7 +76,16 @@ public class Bot extends ListenerAdapter {
         }
 
         switch (commandInvocation.command) {
-            case "challenge" -> onChallengesListRequested(event);
+            case "challenge" -> {
+                if (commandInvocation.args.length == 0)
+                    onChallengesListRequested(event);
+                else if (commandInvocation.args.length == 1) {
+                    // TODO: Validate argument
+                    onChallengeStatusRequested(event, Integer.parseInt(commandInvocation.args[0]));
+                } else {
+                    throw new UnsupportedOperationException("Invalid arguments count, expected 0 or 1");
+                }
+            }
             case "me" -> onIntroduction(event, commandInvocation.args);
             case "request" -> onChallengeRequested(event);
             case "gods" -> onAvailableGodsRequested(event);
@@ -117,24 +127,13 @@ public class Bot extends ListenerAdapter {
             onChallengeAccepted(event);
     }
 
-    private void onChallengeStatusRequested(MessageReceivedEvent event) {
+    private void onChallengeStatusRequested(MessageReceivedEvent event, int challengeId) {
         MessageChannel channel = event.getChannel();
 
         GetChallengeStatusUseCase getChallengeStatusUseCase = new GetChallengeStatusUseCase(challengerRepository, challengeRepository, challengeService);
-        GetChallengeStatusUseCase.Result result = getChallengeStatusUseCase.execute(event.getAuthor().getIdLong(), 1);
+        ChallengeStatus status = getChallengeStatusUseCase.execute(event.getAuthor().getIdLong(), challengeId);
 
-        String message;
-
-        if (result.status != null) {
-            message = result.status.toString();
-        } else {
-            message = switch (result.error) {
-                case CHALLENGER_NOT_REGISTERED -> "A Challenge? Don't you think I deserve a proper introduction first?";
-                case CHALLENGE_NOT_ACTIVE -> "You have no active challenge. Do you want to begin?";
-            };
-        }
-
-        channel.sendMessage(message).queue();
+        channel.sendMessage(status.toString()).queue();
     }
 
     private void onIntroduction(MessageReceivedEvent event, String[] args) {
