@@ -53,6 +53,10 @@ Table proposition_message {
     id "bigint unsigned" [pk]
     requester_id "bigint unsigned" [not null, ref: > challenger.discord_id]
     challenge_id "int unsigned" [not null, ref: > challenge.id]
+
+    indexes {
+        (requester_id, challenge_id) [unique]
+    }
 }
 
 Table proposed_champion {
