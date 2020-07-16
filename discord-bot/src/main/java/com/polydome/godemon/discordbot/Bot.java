@@ -76,6 +76,7 @@ public class Bot extends ListenerAdapter {
             case "me" -> onIntroduction(event, commandInvocation.args);
             case "request" -> onChallengeRequested(event);
             case "gods" -> onAvailableGodsRequested(event);
+            case "join" -> onChallengeJoin(event, commandInvocation.args);
         }
     }
 
