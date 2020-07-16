@@ -1,6 +1,8 @@
 package com.polydome.godemon.domain.usecase;
 
+import com.polydome.godemon.domain.exception.ActionForbiddenException;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
+import com.polydome.godemon.domain.repository.exception.NoSuchEntityException;
 import com.polydome.godemon.domain.service.PlayerEndpoint;
 import lombok.Data;
 
@@ -25,15 +27,19 @@ public class IntroduceUseCase {
     }
 
     public Result execute(long discordId, String inGameName) {
-        if (challengerRepository.findByDiscordId(discordId) != null)
-            return new Result(Error.CHALLENGER_ALREADY_REGISTERED, inGameName);
+        try {
+            // TODO: Should check for existing instead
+            challengerRepository.findByDiscordId(discordId);
+        } catch (NoSuchEntityException e) {
+            Integer inGameId = playerEndpoint.fetchPlayerId(inGameName);
 
-        Integer inGameId = playerEndpoint.fetchPlayerId(inGameName);
+            if (inGameId == null)
+                return new Result(Error.PLAYER_NOT_EXISTS, null);
 
-        if (inGameId == null)
-            return new Result(Error.PLAYER_NOT_EXISTS, null);
+            challengerRepository.insert(discordId, inGameName, inGameId);
+            return new Result(null, inGameName);
+        }
 
-        challengerRepository.insert(discordId, inGameName, inGameId);
-        return new Result(null, inGameName);
+        throw new ActionForbiddenException("User already registered");
     }
 }
