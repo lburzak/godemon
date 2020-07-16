@@ -3,6 +3,7 @@ package com.polydome.godemon.data.dao;
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
+import com.polydome.godemon.domain.repository.exception.CRUDException;
 import com.polydome.godemon.smitedata.implementation.SmiteGameModeService;
 
 import java.sql.*;
@@ -43,7 +44,7 @@ public class ChallengeDAO implements ChallengeRepository {
     }
 
     @Override
-    public void createChallenge(Challenge challenge) {
+    public void createChallenge(Challenge challenge) throws CRUDException {
         try {
             insertChallengeStatement.setTimestamp(1, Timestamp.from(challenge.getLastUpdate()));
             insertChallengeStatement.setInt(2, gameModeService.getGameModeId(challenge.getGameMode()));
@@ -60,13 +61,13 @@ public class ChallengeDAO implements ChallengeRepository {
                 insertParticipant.setInt(1, challenge.getId());
                 insertParticipant.setLong(2, challenger.getId());
             }
-        } catch (SQLException throwable) {
-            throwable.printStackTrace();
+        } catch (SQLException e) {
+            throw new CRUDException("Internal query failure", e);
         }
     }
 
     @Override
-    public Challenge findChallenge(int id) {
+    public Challenge findChallenge(int id) throws CRUDException {
         try {
             var challengeBuilder = Challenge.builder();
 
@@ -104,14 +105,12 @@ public class ChallengeDAO implements ChallengeRepository {
 
             return challengeBuilder.build();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new CRUDException("Internal query failure", e);
         }
-
-        return null;
     }
 
     @Override
-    public void updateChallenge(Challenge challenge) {
+    public void updateChallenge(Challenge challenge) throws CRUDException {
         try {
             selectChampionsByChallengeId.setInt(1, challenge.getId());
             ResultSet resultSet = selectChampionsByChallengeId.executeQuery();
@@ -147,8 +146,8 @@ public class ChallengeDAO implements ChallengeRepository {
             updateChallengeLastUpdateStatement.setTimestamp(1, Timestamp.from(challenge.getLastUpdate()));
             updateChallengeLastUpdateStatement.setInt(2, challenge.getId());
             updateChallengeLastUpdateStatement.execute();
-        } catch (SQLException throwable) {
-            throwable.printStackTrace();
+        } catch (SQLException e) {
+            throw new CRUDException("Internal query failure", e);
         }
     }
 }
