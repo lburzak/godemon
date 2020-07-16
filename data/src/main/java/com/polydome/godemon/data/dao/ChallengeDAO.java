@@ -5,6 +5,7 @@ import com.polydome.godemon.domain.entity.ChallengeStage;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.exception.CRUDException;
+import com.polydome.godemon.domain.repository.exception.NoSuchEntityException;
 import com.polydome.godemon.smitedata.implementation.SmiteGameModeService;
 
 import java.sql.*;
@@ -83,6 +84,8 @@ public class ChallengeDAO implements ChallengeRepository {
                         .lastUpdate(resultSet.getTimestamp("last_update").toInstant())
                         .gameMode(gameModeService.getGameModeFromId(resultSet.getInt("gamemode_id")))
                         .id(resultSet.getInt(id));
+            } else {
+                throw new NoSuchEntityException(Challenge.class, String.valueOf(id));
             }
             
             challengeBuilder.availableGods(findAvailableGods(id));
