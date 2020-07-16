@@ -152,8 +152,8 @@ public class ChallengeDAO implements ChallengeRepository {
                 participants.add(
                         Challenger.builder()
                                 .id(participantRow.getInt("id"))
-                                .inGameName(participantRow.getString("hirez_id"))
-                                .inGameId(participantRow.getInt("hirez_name"))
+                                .inGameId(participantRow.getInt("hirez_id"))
+                                .inGameName(participantRow.getString("hirez_name"))
                                 .build()
                 );
             }
