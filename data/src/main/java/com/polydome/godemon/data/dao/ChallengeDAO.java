@@ -83,7 +83,7 @@ public class ChallengeDAO implements ChallengeRepository {
                 challengeBuilder
                         .lastUpdate(resultSet.getTimestamp("last_update").toInstant())
                         .gameMode(gameModeService.getGameModeFromId(resultSet.getInt("gamemode_id")))
-                        .id(resultSet.getInt(id));
+                        .id(resultSet.getInt("id"));
             } else {
                 throw new NoSuchEntityException(Challenge.class, String.valueOf(id));
             }
