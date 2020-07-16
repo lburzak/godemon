@@ -1,7 +1,7 @@
 package com.polydome.godemon.data.dao;
 
 import com.polydome.godemon.domain.entity.Challenge;
-import com.polydome.godemon.domain.entity.ChallengeStatus;
+import com.polydome.godemon.domain.entity.ChallengeStage;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.exception.CRUDException;
@@ -184,7 +184,7 @@ public class ChallengeDAO implements ChallengeRepository {
                         .participants(findParticipants(id))
                         .gameMode(gameModeService.getGameModeFromId(resultSet.getInt("gamemode_id")))
                         .lastUpdate(resultSet.getTimestamp("last_update").toInstant())
-                        .status(ChallengeStatus.ONGOING)
+                        .status(ChallengeStage.ONGOING)
                         .availableGods(findAvailableGods(id))
                         .build()
                 );

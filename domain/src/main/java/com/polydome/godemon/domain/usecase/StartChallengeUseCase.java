@@ -1,7 +1,7 @@
 package com.polydome.godemon.domain.usecase;
 
 import com.polydome.godemon.domain.entity.Challenge;
-import com.polydome.godemon.domain.entity.ChallengeStatus;
+import com.polydome.godemon.domain.entity.ChallengeStage;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.exception.AuthenticationException;
@@ -29,7 +29,7 @@ public class StartChallengeUseCase {
                 .gameMode(gameMode)
                 .lastUpdate(Instant.now())
                 .participants(List.of())
-                .status(ChallengeStatus.PROPOSED)
+                .status(ChallengeStage.PROPOSED)
                 .build()
         );
 

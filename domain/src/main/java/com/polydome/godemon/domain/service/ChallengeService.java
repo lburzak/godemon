@@ -1,16 +1,14 @@
 package com.polydome.godemon.domain.service;
 
 import com.polydome.godemon.domain.entity.Challenge;
+import com.polydome.godemon.domain.entity.ChallengeStage;
 import com.polydome.godemon.domain.entity.Challenger;
-import com.polydome.godemon.domain.model.ChallengeStatus;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.service.matchdetails.MatchDetails;
 import com.polydome.godemon.domain.service.matchdetails.MatchDetailsEndpoint;
 import com.polydome.godemon.domain.service.matchdetails.PlayerRecord;
-import com.polydome.godemon.domain.usecase.GetChallengeStatusUseCase;
 import com.polydome.godemon.domain.usecase.GodPool;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -50,7 +48,7 @@ public class ChallengeService {
 
         for (final var match : fetchedMatches) {
             if (godPool.distinctCount() > challenge.getParticipants().size()) {
-                challengeBuilder.status(com.polydome.godemon.domain.entity.ChallengeStatus.FAILED);
+                challengeBuilder.status(ChallengeStage.FAILED);
                 break;
             }
 

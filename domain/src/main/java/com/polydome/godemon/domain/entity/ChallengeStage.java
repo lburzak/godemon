@@ -1,6 +1,6 @@
 package com.polydome.godemon.domain.entity;
 
-public enum ChallengeStatus {
+public enum ChallengeStage {
     PROPOSED,
     ONGOING,
     FAILED,

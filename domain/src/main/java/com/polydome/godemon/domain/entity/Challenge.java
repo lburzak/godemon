@@ -17,5 +17,5 @@ public class Challenge {
     private final GameMode gameMode;
     private final Instant lastUpdate;
     private final List<Challenger> participants;
-    private final ChallengeStatus status;
+    private final ChallengeStage status;
 }

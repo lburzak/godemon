@@ -1,9 +1,8 @@
 package com.polydome.godemon.domain.usecase;
 
 import com.polydome.godemon.domain.entity.Challenge;
-import com.polydome.godemon.domain.entity.ChallengeStatus;
+import com.polydome.godemon.domain.entity.ChallengeStage;
 import com.polydome.godemon.domain.entity.Challenger;
-import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
 import com.polydome.godemon.domain.repository.PropositionRepository;
@@ -45,7 +44,7 @@ public class GetAvailableGodsUseCase {
         if (challenge == null)
             return new Result(Error.CHALLENGE_NOT_ACTIVE, null);
 
-        if (challenge.getStatus() == ChallengeStatus.PROPOSED)
+        if (challenge.getStatus() == ChallengeStage.PROPOSED)
             return new Result(Error.CHALLENGE_IN_PROPOSITION_STAGE, null);
 
         return new Result(null, challenge.getAvailableGods());
