@@ -2,6 +2,7 @@ package com.polydome.godemon.domain.usecase;
 
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Challenger;
+import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.exception.AuthenticationException;
 import com.polydome.godemon.domain.exception.NoSuchChallengeException;
 import com.polydome.godemon.domain.model.ChallengeProposition;
@@ -37,7 +38,14 @@ public class JoinChallengeUseCase {
 
         int[] gods = championRepository.getRandomIds(gameRulesProvider.getChallengeProposedGodsCount());
 
-        propositionRepository.createProposition(challenge.getId(), gods, messageId);
+        propositionRepository.createProposition(
+                Proposition.builder()
+                    .challengeId(challengeId)
+                    .gods(gods)
+                    .messageId(messageId)
+                    .requesterId(discordId)
+                    .build()
+        );
 
         return new ChallengeProposition(gods);
     }
