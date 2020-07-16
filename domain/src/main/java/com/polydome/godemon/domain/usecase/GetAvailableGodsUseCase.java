@@ -34,13 +34,13 @@ public class GetAvailableGodsUseCase {
         private final Map<Integer, Integer> godsToUsesLeft;
     }
 
-    public Result execute(long challengerId) {
+    public Result execute(long challengerId, int challengeId) {
         Challenger challenger = challengerRepository.findByDiscordId(challengerId);
 
         if (challenger == null)
             return new Result(Error.CHALLENGER_NOT_REGISTERED, null);
 
-        Challenge challenge = challengeRepository.findChallengeByChallengerId(challengerId);
+        Challenge challenge = challengeRepository.findChallenge(challengeId);
 
         if (challenge == null)
             return new Result(Error.CHALLENGE_NOT_ACTIVE, null);

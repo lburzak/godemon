@@ -86,7 +86,7 @@ public class Bot extends ListenerAdapter {
 
     private void onAvailableGodsRequested(MessageReceivedEvent event) {
         GetAvailableGodsUseCase getAvailableGodsUseCase = new GetAvailableGodsUseCase(challengeRepository, propositionRepository, challengerRepository);
-        GetAvailableGodsUseCase.Result result = getAvailableGodsUseCase.execute(event.getAuthor().getIdLong());
+        GetAvailableGodsUseCase.Result result = getAvailableGodsUseCase.execute(event.getAuthor().getIdLong(), 1);
 
         if (result.getError() == null) {
             EmbedBuilder embedBuilder = new EmbedBuilder();
@@ -118,7 +118,7 @@ public class Bot extends ListenerAdapter {
         MessageChannel channel = event.getChannel();
 
         GetChallengeStatusUseCase getChallengeStatusUseCase = new GetChallengeStatusUseCase(challengerRepository, challengeRepository, challengeService);
-        GetChallengeStatusUseCase.Result result = getChallengeStatusUseCase.execute(event.getAuthor().getIdLong());
+        GetChallengeStatusUseCase.Result result = getChallengeStatusUseCase.execute(event.getAuthor().getIdLong(), 1);
 
         String message;
 

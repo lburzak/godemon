@@ -30,13 +30,13 @@ public class GetChallengeStatusUseCase {
         public final ChallengeStatus status;
     }
 
-    public Result execute(long discordId) {
+    public Result execute(long discordId, int challengeId) {
         Challenger challenger = challengerRepository.findByDiscordId(discordId);
         if (challenger == null) {
             return new Result(Error.CHALLENGER_NOT_REGISTERED, null);
         }
 
-        Challenge challenge = challengeRepository.findChallengeByChallengerId(challenger.getId());
+        Challenge challenge = challengeRepository.findChallenge(challengeId);
         if (challenge == null)
             return new Result(Error.CHALLENGE_NOT_ACTIVE, null);
 
