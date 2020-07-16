@@ -3,6 +3,7 @@ package com.polydome.godemon.discordbot;
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.exception.ActionForbiddenException;
 import com.polydome.godemon.domain.exception.AuthenticationException;
+import com.polydome.godemon.domain.exception.NoSuchChallengeException;
 import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeProposition;
 import com.polydome.godemon.domain.model.ChallengeStatus;
@@ -131,9 +132,21 @@ public class Bot extends ListenerAdapter {
         MessageChannel channel = event.getChannel();
 
         GetChallengeStatusUseCase getChallengeStatusUseCase = new GetChallengeStatusUseCase(challengerRepository, challengeRepository, challengeService);
-        ChallengeStatus status = getChallengeStatusUseCase.execute(event.getAuthor().getIdLong(), challengeId);
 
-        channel.sendMessage(status.toString()).queue();
+        String replyContent = "";
+
+        try {
+            ChallengeStatus status = getChallengeStatusUseCase.execute(event.getAuthor().getIdLong(), challengeId);
+            replyContent = status.toString();
+        } catch (AuthenticationException e) {
+            replyContent = String.format("%s, please register with `;godemon me <SMITE_USERNAME>.`", event.getAuthor().getAsMention());
+        } catch (NoSuchChallengeException e) {
+            replyContent = String.format("%s, such challenge doesn't exist!", event.getAuthor().getAsMention());
+        } catch (ActionForbiddenException e) {
+            replyContent = String.format("%s, you do not participate in that challenge.", event.getAuthor().getAsMention());
+        }
+
+        event.getChannel().sendMessage(replyContent).queue();
     }
 
     private void onIntroduction(MessageReceivedEvent event, String[] args) {
