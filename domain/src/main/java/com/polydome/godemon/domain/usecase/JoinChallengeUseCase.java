@@ -3,6 +3,7 @@ package com.polydome.godemon.domain.usecase;
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.entity.Proposition;
+import com.polydome.godemon.domain.exception.ActionForbiddenException;
 import com.polydome.godemon.domain.exception.AuthenticationException;
 import com.polydome.godemon.domain.exception.NoSuchChallengeException;
 import com.polydome.godemon.domain.model.ChallengeProposition;
@@ -23,7 +24,7 @@ public class JoinChallengeUseCase {
     private final GameRulesProvider gameRulesProvider;
     private final PropositionRepository propositionRepository;
 
-    public ChallengeProposition withChallengeId(long discordId, int challengeId, long messageId) throws AuthenticationException {
+    public ChallengeProposition withChallengeId(long discordId, int challengeId, long messageId) throws AuthenticationException, ActionForbiddenException {
         Challenger challenger = challengerRepository.findByDiscordId(discordId);
         if (challenger == null)
             throw new AuthenticationException("Challenger not registered");
@@ -35,6 +36,9 @@ public class JoinChallengeUseCase {
         if (challenge == null) {
             throw new NoSuchChallengeException(challengeId);
         }
+
+        if (challenge.getParticipants().stream().anyMatch(participant -> participant.getId() == challenger.getId()))
+            throw new ActionForbiddenException(String.format("Challenger is already a participant of challenge [%d]", challenge.getId()));
 
         int[] gods = championRepository.getRandomIds(gameRulesProvider.getChallengeProposedGodsCount());
 

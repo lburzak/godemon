@@ -2,6 +2,8 @@ package com.polydome.godemon.data.dao;
 
 import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.PropositionRepository;
+import com.polydome.godemon.domain.repository.exception.CRUDException;
+import com.polydome.godemon.domain.repository.exception.DuplicateEntryException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -74,12 +76,19 @@ public class PropositionDAO implements PropositionRepository {
     }
 
     @Override
-    public void createProposition(Proposition proposition) {
+    public void createProposition(Proposition proposition) throws CRUDException {
         try {
             insertProposition.setLong(1, proposition.getMessageId());
             insertProposition.setInt(2, proposition.getChallengeId());
             insertProposition.setLong(3, proposition.getRequesterId());
-            insertProposition.execute();
+
+            try {
+                insertProposition.execute();
+            } catch (SQLException e) {
+                if (e.getMessage().startsWith("Duplicate")) {
+                    throw new DuplicateEntryException(Proposition.class.getName());
+                }
+            }
 
             for (final var champion : proposition.getGods()) {
                 insertProposedChampion.setLong(1, proposition.getMessageId());

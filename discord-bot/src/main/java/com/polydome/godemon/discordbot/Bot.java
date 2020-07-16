@@ -1,6 +1,7 @@
 package com.polydome.godemon.discordbot;
 
 import com.polydome.godemon.domain.entity.GameMode;
+import com.polydome.godemon.domain.exception.ActionForbiddenException;
 import com.polydome.godemon.domain.model.ChallengeProposition;
 import com.polydome.godemon.domain.repository.*;
 import com.polydome.godemon.domain.service.ChallengeService;
@@ -168,14 +169,20 @@ public class Bot extends ListenerAdapter {
     private void onChallengeJoin(MessageReceivedEvent event, String[] args) {
         JoinChallengeUseCase joinChallengeUseCase = new JoinChallengeUseCase(challengeService, challengeRepository, challengerRepository, championRepository, gameRulesProvider, propositionRepository);
 
-        event.getChannel().sendMessage("I'm picking some gods for you...").queue(
+        event.getChannel().sendMessage("Please wait...").queue(
                 message -> {
-                    ChallengeProposition proposition = joinChallengeUseCase.withChallengeId(event.getAuthor().getIdLong(), Integer.parseInt(args[0]), message.getIdLong());
+                    ChallengeProposition proposition;
 
-                    String content;
+                    try {
+                        proposition = joinChallengeUseCase.withChallengeId(event.getAuthor().getIdLong(), Integer.parseInt(args[0]), message.getIdLong());
+                    } catch (ActionForbiddenException e) {
+                        String messageContent = String.format("%s, you participate in this challenge already.", event.getAuthor().getAsMention());
+                        message.editMessage(messageContent).queue();
+                        return;
+                    }
 
                     if (proposition != null) {
-                        content = String.format(
+                        String messageContent = String.format(
                                 "%s, choose your first god from the following:",
                                 event.getAuthor().getAsMention()
                         );
@@ -184,7 +191,7 @@ public class Bot extends ListenerAdapter {
                                 .mapToObj(godsDataProvider::findById)
                                 .collect(Collectors.toList());
 
-                        message.editMessage(content).queue(sentMessage -> {
+                        message.editMessage(messageContent).queue(sentMessage -> {
                             for (GodData godData : godsData) {
                                 sentMessage.addReaction(godData.getEmoteId()).queue();
                             }
