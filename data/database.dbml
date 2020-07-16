@@ -60,7 +60,7 @@ Table proposed_champion {
     god_id "int unsigned"
 
     indexes {
-        (proposition_message, proposed_champion) [pk]
+        (proposition_message, god_id) [pk]
     }
     Note: 'Champions to choose from when accepting a propostion'
 }
