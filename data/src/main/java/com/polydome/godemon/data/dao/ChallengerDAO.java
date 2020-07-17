@@ -22,7 +22,7 @@ public class ChallengerDAO implements ChallengerRepository {
     }
 
     @Override
-    public Challenger findByDiscordId(long id) {
+    public Challenger findChallengerById(long id) {
         try {
             findByDiscordIdStatement.setLong(1, id);
             ResultSet row = findByDiscordIdStatement.executeQuery();
@@ -42,7 +42,7 @@ public class ChallengerDAO implements ChallengerRepository {
     }
 
     @Override
-    public void insert(long discordId, String inGameName, int inGameId) {
+    public void createChallenger(long discordId, String inGameName, int inGameId) {
         try {
             insertStatement.setLong(1, discordId);
             insertStatement.setString(2, inGameName);

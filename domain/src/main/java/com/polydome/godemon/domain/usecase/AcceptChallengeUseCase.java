@@ -25,7 +25,7 @@ public class AcceptChallengeUseCase {
         if (proposition == null)
             throw new NoSuchPropositionException(String.format("Proposition not found [%d]", messageId));
 
-        Challenger challenger = challengerRepository.findByDiscordId(discordId);
+        Challenger challenger = challengerRepository.findChallengerById(discordId);
         if (challenger == null)
             throw new AuthenticationException(String.format("Challenger [%d] not registered", discordId));
 

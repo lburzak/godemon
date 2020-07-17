@@ -29,7 +29,7 @@ public class JoinChallengeUseCase {
         Challenger challenger;
 
         try {
-            challenger = challengerRepository.findByDiscordId(discordId);
+            challenger = challengerRepository.findChallengerById(discordId);
         } catch (NoSuchEntityException e) {
             throw new AuthenticationException("Challenger not registered");
         }

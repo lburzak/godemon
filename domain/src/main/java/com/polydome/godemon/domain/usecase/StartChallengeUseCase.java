@@ -19,7 +19,7 @@ public class StartChallengeUseCase {
     private final ChallengeRepository challengeRepository;
 
     public boolean execute(long discordId, GameMode gameMode) {
-        Challenger challenger = challengerRepository.findByDiscordId(discordId);
+        Challenger challenger = challengerRepository.findChallengerById(discordId);
         if (challenger == null)
             throw new AuthenticationException("Challenger not registered");
 

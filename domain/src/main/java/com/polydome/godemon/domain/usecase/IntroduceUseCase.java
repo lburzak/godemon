@@ -29,14 +29,14 @@ public class IntroduceUseCase {
     public Result execute(long discordId, String inGameName) {
         try {
             // TODO: Should check for existing instead
-            challengerRepository.findByDiscordId(discordId);
+            challengerRepository.findChallengerById(discordId);
         } catch (NoSuchEntityException e) {
             Integer inGameId = playerEndpoint.fetchPlayerId(inGameName);
 
             if (inGameId == null)
                 return new Result(Error.PLAYER_NOT_EXISTS, null);
 
-            challengerRepository.insert(discordId, inGameName, inGameId);
+            challengerRepository.createChallenger(discordId, inGameName, inGameId);
             return new Result(null, inGameName);
         }
 

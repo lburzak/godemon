@@ -20,7 +20,7 @@ public class GetChallengeStatusUseCase {
 
     public ChallengeStatus execute(long challengerId, int challengeId) throws ActionForbiddenException, AuthenticationException, NoSuchChallengeException {
         try {
-            challengerRepository.findByDiscordId(challengerId);
+            challengerRepository.findChallengerById(challengerId);
         } catch (NoSuchEntityException e) {
             throw new AuthenticationException(String.format("Challenger[%d] not registered", challengerId));
         }

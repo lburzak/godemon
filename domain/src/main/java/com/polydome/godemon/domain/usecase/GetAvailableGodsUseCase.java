@@ -34,7 +34,7 @@ public class GetAvailableGodsUseCase {
     }
 
     public Result execute(long challengerId, int challengeId) {
-        Challenger challenger = challengerRepository.findByDiscordId(challengerId);
+        Challenger challenger = challengerRepository.findChallengerById(challengerId);
 
         if (challenger == null)
             return new Result(Error.CHALLENGER_NOT_REGISTERED, null);
