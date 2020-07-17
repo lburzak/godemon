@@ -1,2 +1,6 @@
 group 'com.polydome.godemon'
 version '1.0-SNAPSHOT'
+
+wrapper {
+    gradleVersion("6.5.1")
+}
