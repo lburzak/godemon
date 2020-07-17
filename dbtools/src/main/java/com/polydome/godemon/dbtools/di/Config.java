@@ -86,11 +86,7 @@ public class Config {
     @Bean
     public JDA jda(final @Value("${discord.botToken}") String botToken) throws LoginException {
         return JDABuilder
-                .createLight(botToken,
-                        GatewayIntent.GUILD_MESSAGES,
-                        GatewayIntent.DIRECT_MESSAGES,
-                        GatewayIntent.GUILD_MESSAGE_REACTIONS,
-                        GatewayIntent.GUILD_EMOJIS)
+                .createLight(botToken, GatewayIntent.GUILD_EMOJIS)
                 .enableCache(CacheFlag.EMOTE)
                 .build();
     }
