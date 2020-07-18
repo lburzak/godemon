@@ -66,6 +66,7 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
         if (outMessage != null) {
             outMessage.editMessage(content).queue();
+            outMessage.clearReactions().queue();
         }
     }
 
