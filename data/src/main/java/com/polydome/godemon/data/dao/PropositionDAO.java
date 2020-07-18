@@ -34,24 +34,28 @@ public class PropositionDAO implements PropositionRepository {
             countProposedChampions.setLong(2, challengerId);
             ResultSet resultSet = countProposedChampions.executeQuery();
 
-            int count = resultSet.getInt("count");
-            int[] champions = new int[count];
-
-            selectProposedChampions.setInt(1, challengeId);
-            selectProposedChampions.setLong(2, challengerId);
-            resultSet = selectProposedChampions.executeQuery();
-            
-            int i = 0;
-            while (resultSet.next()) {
-                champions[i] = (resultSet.getInt("god_id"));
-                i++;
-            }
-            
-            return Proposition.builder()
+            var builder = Proposition.builder()
                     .requesterId(challengerId)
-                    .challengeId(challengeId)
-                    .gods(champions)
-                    .build();
+                    .challengeId(challengeId);
+
+            if (resultSet.next()) {
+                int count = resultSet.getInt("count");
+                int[] champions = new int[count];
+
+                selectProposedChampions.setInt(1, challengeId);
+                selectProposedChampions.setLong(2, challengerId);
+                resultSet = selectProposedChampions.executeQuery();
+
+                int i = 0;
+                while (resultSet.next()) {
+                    champions[i] = (resultSet.getInt("god_id"));
+                    i++;
+                }
+
+                builder.gods(champions);
+            }
+
+            return builder.build();
         } catch (SQLException e) {
             e.printStackTrace();
         }
