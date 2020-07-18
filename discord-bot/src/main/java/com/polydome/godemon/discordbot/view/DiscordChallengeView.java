@@ -61,7 +61,7 @@ public class DiscordChallengeView implements ChallengeContract.View {
     public void showStartingGod(int godId) {
         String content = String.format(
                 "%s, Your starting god is `%s`! Good luck!",
-                mention, godsDataProvider.findById(godId).getEmoteId()
+                mention, godsDataProvider.findById(godId).getName()
         );
 
         if (outMessage != null) {
