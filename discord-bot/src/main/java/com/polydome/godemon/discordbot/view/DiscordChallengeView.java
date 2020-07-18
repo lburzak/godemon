@@ -76,23 +76,19 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
     @Override
     public void showProposition(int challengeId, int[] godsIds) {
-        if (outMessage != null) {
-            String messageContent = String.format(
-                    "%s, choose your first god from the following:",
-                    mention
-            );
+        String messageContent = String.format(
+                "%s, choose your first god from the following:",
+                mention
+        );
 
-            outMessage.editMessage(messageContent).queue();
+        channel.sendMessage(messageContent).queue(message -> {
+            outMessage = message;
+            cache.setLongToInt(message.getIdLong(), challengeId).subscribe();
 
-            channel.sendMessage(messageContent).queue(message -> {
-                outMessage = message;
-                cache.setLongToInt(message.getIdLong(), challengeId).subscribe();
-
-                for (final int id : godsIds) {
-                    message.addReaction(godsDataProvider.findById(id).getEmoteId()).queue();
-                }
-            });
-        }
+            for (final int id : godsIds) {
+                message.addReaction(godsDataProvider.findById(id).getEmoteId()).queue();
+            }
+        });
     }
 
     @Service
