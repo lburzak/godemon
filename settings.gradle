@@ -7,4 +7,6 @@ include 'data'
 include 'hot-test'
 include 'discord-api'
 include 'dbtools'
+include 'presentation'
+include 'discord-bot-app'
 
