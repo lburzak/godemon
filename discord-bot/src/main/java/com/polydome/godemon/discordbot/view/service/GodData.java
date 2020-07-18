@@ -1,4 +1,4 @@
-package com.polydome.godemon.discordbot;
+package com.polydome.godemon.discordbot.view.service;
 
 import lombok.Data;
 

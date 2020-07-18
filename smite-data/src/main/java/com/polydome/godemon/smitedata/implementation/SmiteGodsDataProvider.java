@@ -1,7 +1,7 @@
 package com.polydome.godemon.smitedata.implementation;
 
-import com.polydome.godemon.discordbot.GodData;
-import com.polydome.godemon.discordbot.GodsDataProvider;
+import com.polydome.godemon.discordbot.view.service.GodData;
+import com.polydome.godemon.discordbot.view.service.GodsDataProvider;
 import com.polydome.godemon.domain.repository.ChampionRepository;
 import com.polydome.godemon.smitedata.entity.SmiteChampion;
 import com.polydome.godemon.smitedata.repository.SmiteChampionRepository;
