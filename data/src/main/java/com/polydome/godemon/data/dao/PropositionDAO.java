@@ -11,63 +11,47 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class PropositionDAO implements PropositionRepository {
-    private final PreparedStatement selectProposition;
     private final PreparedStatement selectProposedChampions;
     private final PreparedStatement countProposedChampions;
-    private final PreparedStatement insertProposition;
     private final PreparedStatement insertProposedChampion;
     private final PreparedStatement deleteProposedChampions;
-    private final PreparedStatement deleteProposition;
 
     public PropositionDAO(Connection dbConnection) throws SQLException {
-        selectProposition =
-                dbConnection.prepareStatement("SELECT requester_id, challenge_id FROM proposition_message WHERE id = ?");
         countProposedChampions =
-                dbConnection.prepareStatement("SELECT COUNT(*) as `count` FROM proposed_champion WHERE proposition_message_id = ?");
+                dbConnection.prepareStatement("SELECT COUNT(*) as `count` FROM proposed_champion WHERE challenge_id = ? AND requester_id = ?");
         selectProposedChampions =
-                dbConnection.prepareStatement("SELECT god_id FROM proposed_champion WHERE proposition_message_id = ?");
-        insertProposition =
-                dbConnection.prepareStatement("INSERT INTO proposition_message (id, challenge_id, requester_id) VALUES (?, ?, ?)");
+                dbConnection.prepareStatement("SELECT god_id FROM proposed_champion WHERE challenge_id = ? AND requester_id = ?");
         insertProposedChampion =
-                dbConnection.prepareStatement("INSERT INTO proposed_champion (proposition_message_id, god_id) VALUES (?, ?)");
+                dbConnection.prepareStatement("INSERT INTO proposed_champion (challenge_id, requester_id, god_id) VALUES (?, ?, ?)");
         deleteProposedChampions =
-                dbConnection.prepareStatement("DELETE FROM proposed_champion WHERE proposition_message_id = ?");
-        deleteProposition =
-                dbConnection.prepareStatement("DELETE FROM proposition_message WHERE id = ?");
+                dbConnection.prepareStatement("DELETE FROM proposed_champion WHERE challenge_id = ? AND requester_id = ?");
     }
 
     @Override
-    public Proposition findProposition(long messageId) {
-        try {
-            selectProposition.setLong(1, messageId);
-            ResultSet resultSet = selectProposition.executeQuery();
+    public Proposition findProposition(int challengeId, long challengerId) {
+        try {            
+            countProposedChampions.setInt(1, challengeId);
+            countProposedChampions.setLong(2, challengerId);
+            ResultSet resultSet = countProposedChampions.executeQuery();
 
-            if (resultSet.next()) {
-                var builder = Proposition.builder();
-                builder.messageId(messageId);
-                builder.challengeId(resultSet.getInt("challenge_id"));
-                builder.requesterId(resultSet.getLong("requester_id"));
+            int count = resultSet.getInt("count");
+            int[] champions = new int[count];
 
-                countProposedChampions.setLong(1, messageId);
-                resultSet = countProposedChampions.executeQuery();
-
-                if (!resultSet.next())
-                    return builder.build();
-
-                int count = resultSet.getInt("count");
-                int[] champions = new int[count];
-
-                selectProposedChampions.setLong(1, messageId);
-                resultSet = selectProposedChampions.executeQuery();
-                int i = 0;
-                while (resultSet.next()) {
-                    champions[i] = (resultSet.getInt("god_id"));
-                    i++;
-                }
-
-                builder.gods(champions);
-                return builder.build();
+            selectProposedChampions.setInt(1, challengeId);
+            selectProposedChampions.setLong(2, challengerId);
+            resultSet = selectProposedChampions.executeQuery();
+            
+            int i = 0;
+            while (resultSet.next()) {
+                champions[i] = (resultSet.getInt("god_id"));
+                i++;
             }
+            
+            return Proposition.builder()
+                    .requesterId(challengerId)
+                    .challengeId(challengeId)
+                    .gods(champions)
+                    .build();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -76,38 +60,27 @@ public class PropositionDAO implements PropositionRepository {
     }
 
     @Override
-    public void createProposition(Proposition proposition) throws CRUDException {
+    public void deleteProposition(int challengeId, long challengerId) {
         try {
-            insertProposition.setLong(1, proposition.getMessageId());
-            insertProposition.setInt(2, proposition.getChallengeId());
-            insertProposition.setLong(3, proposition.getRequesterId());
+            deleteProposedChampions.setInt(1, challengeId);
+            deleteProposedChampions.setLong(2, challengerId);
 
-            try {
-                insertProposition.execute();
-            } catch (SQLException e) {
-                if (e.getMessage().startsWith("Duplicate")) {
-                    throw new DuplicateEntryException(Proposition.class.getName());
-                }
-            }
-
-            for (final var champion : proposition.getGods()) {
-                insertProposedChampion.setLong(1, proposition.getMessageId());
-                insertProposedChampion.setInt(2, champion);
-                insertProposedChampion.execute();
-            }
+            deleteProposedChampions.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void deleteProposition(long messageId) {
+    public void createProposition(Proposition proposition) throws CRUDException {
         try {
-            deleteProposedChampions.setLong(1, messageId);
-            deleteProposedChampions.execute();
+            insertProposedChampion.setInt(1, proposition.getChallengeId());
+            insertProposedChampion.setLong(2, proposition.getRequesterId());
 
-            deleteProposition.setLong(1, messageId);
-            deleteProposition.execute();
+            for (final var champion : proposition.getGods()) {
+                insertProposedChampion.setInt(3, champion);
+                insertProposedChampion.execute();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

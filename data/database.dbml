@@ -49,22 +49,13 @@ Table participant {
     Note: 'Challenge participants'
 }
 
-Table proposition_message {
-    id "bigint unsigned" [pk]
-    requester_id "bigint unsigned" [not null, ref: > challenger.discord_id]
-    challenge_id "int unsigned" [not null, ref: > challenge.id]
-
-    indexes {
-        (requester_id, challenge_id) [unique]
-    }
-}
-
 Table proposed_champion {
-    proposition_message_id "bigint unsigned" [ref: > proposition_message.id]
-    god_id "int unsigned"
+    requester_id "bigint unsigned" [ref: > challenger.discord_id]
+    challenge_id "int unsigned" [ref: > challenge.id]
+    god_id "int unsigned" [ref: > god.id]
 
     indexes {
-        (proposition_message_id, god_id) [pk]
+        (requester_id, challenge_id, god_id) [pk]
     }
     Note: 'Champions to choose from when accepting a propostion'
 }

@@ -20,10 +20,10 @@ public class AcceptChallengeUseCase {
     private final ChallengeRepository challengeRepository;
     private final PropositionRepository propositionRepository;
 
-    public int execute(long discordId, long messageId, int godIdChoice) {
-        Proposition proposition = propositionRepository.findProposition(messageId);
+    public int execute(long discordId, int challengeId, int godIdChoice) {
+        Proposition proposition = propositionRepository.findProposition(challengeId, discordId);
         if (proposition == null)
-            throw new NoSuchPropositionException(String.format("Proposition not found [%d]", messageId));
+            throw new NoSuchPropositionException("Proposition not found");
 
         Challenger challenger = challengerRepository.findChallengerById(discordId);
         if (challenger == null)
@@ -46,7 +46,7 @@ public class AcceptChallengeUseCase {
                     .build()
         );
 
-        propositionRepository.deleteProposition(messageId);
+        propositionRepository.deleteProposition(challengeId, discordId);
 
         return godIdChoice;
     }

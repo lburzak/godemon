@@ -25,7 +25,7 @@ public class JoinChallengeUseCase {
     private final GameRulesProvider gameRulesProvider;
     private final PropositionRepository propositionRepository;
 
-    public ChallengeProposition withChallengeId(long discordId, int challengeId, long messageId) throws AuthenticationException, ActionForbiddenException {
+    public ChallengeProposition withChallengeId(long discordId, int challengeId) throws AuthenticationException, ActionForbiddenException {
         Challenger challenger;
 
         try {
@@ -51,7 +51,6 @@ public class JoinChallengeUseCase {
                 Proposition.builder()
                     .challengeId(challengeId)
                     .gods(gods)
-                    .messageId(messageId)
                     .requesterId(discordId)
                     .build()
         );
