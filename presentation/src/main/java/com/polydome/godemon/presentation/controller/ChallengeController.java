@@ -88,7 +88,7 @@ public class ChallengeController implements ChallengeContract.Presenter {
 
     @Override
     public void onGodChoice(ChallengeContract.View view, long challengerId, int challengeId, int choice) {
-        view.showStartingGod(challengeId);
         acceptChallengeUseCase.execute(challengerId, challengeId, choice);
+        view.showStartingGod(choice);
     }
 }
