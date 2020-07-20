@@ -1,15 +1,9 @@
 package com.polydome.godemon.discordbotapp.di;
 
-import com.polydome.godemon.data.dao.ChallengeDAO;
-import com.polydome.godemon.data.dao.ChallengerDAO;
-import com.polydome.godemon.data.dao.GodDAO;
-import com.polydome.godemon.data.dao.PropositionDAO;
+import com.polydome.godemon.data.dao.*;
 import com.polydome.godemon.discordbot.listener.CommandListener;
 import com.polydome.godemon.discordbot.listener.ReactionListener;
-import com.polydome.godemon.domain.repository.ChallengeRepository;
-import com.polydome.godemon.domain.repository.ChallengerRepository;
-import com.polydome.godemon.domain.repository.ChampionRepository;
-import com.polydome.godemon.domain.repository.PropositionRepository;
+import com.polydome.godemon.domain.repository.*;
 import com.polydome.godemon.domain.service.ChallengeService;
 import com.polydome.godemon.domain.service.GameRulesProvider;
 import com.polydome.godemon.domain.service.PlayerEndpoint;
@@ -97,9 +91,10 @@ public class Config {
     public GetChallengeStatusUseCase getChallengeStatusUseCase(
             ChallengerRepository challengerRepository,
             ChallengeRepository challengeRepository,
-            ChallengeService challengeService
+            ChallengeService challengeService,
+            ContributionRepository contributionRepository
     ) {
-        return new GetChallengeStatusUseCase(challengerRepository, challengeRepository, challengeService);
+        return new GetChallengeStatusUseCase(challengerRepository, challengeRepository, challengeService, contributionRepository);
     }
 
     @Bean
@@ -131,8 +126,8 @@ public class Config {
     }
 
     @Bean
-    public ChallengeService challengeService(MatchDetailsEndpoint matchDetailsEndpoint, ChallengeRepository challengeRepository) {
-        return new ChallengeService(matchDetailsEndpoint, challengeRepository);
+    public ChallengeService challengeService(MatchDetailsEndpoint matchDetailsEndpoint, ChallengeRepository challengeRepository, ContributionRepository contributionRepository) {
+        return new ChallengeService(matchDetailsEndpoint, challengeRepository, contributionRepository);
     }
 
     // Smite data
@@ -172,6 +167,11 @@ public class Config {
     @Bean
     public SmiteChampionRepository smiteChampionRepository(Connection connection) throws SQLException {
         return new GodDAO(connection);
+    }
+
+    @Bean
+    public ContributionRepository contributionRepository(Connection connection) throws SQLException {
+        return new ContributionDAO(connection);
     }
 
     @Bean
