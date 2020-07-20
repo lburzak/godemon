@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class Contribution {
+    private final int matchId;
     private final long playerId;
     private final int godId;
     private final boolean win;

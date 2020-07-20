@@ -53,7 +53,7 @@ public class ChallengeService {
             ownGods = players.ownTeam.map(PlayerRecord::getGodId);
 
             players.ownTeam
-                    .map(this::playerRecordToContribution)
+                    .map(playerRecord -> playerRecordToContribution(playerRecord, match.getId()))
                     .forEach(contributions::add);
 
             if (ownGods.allMatch(godPool::contains)) {
@@ -73,8 +73,9 @@ public class ChallengeService {
         return newChallenge;
     }
 
-    private Contribution playerRecordToContribution(PlayerRecord playerRecord) {
+    private Contribution playerRecordToContribution(PlayerRecord playerRecord, int matchId) {
         return Contribution.builder()
+                .matchId(matchId)
                 .playerId(playerRecord.getPlayerId())
                 .godId(playerRecord.getGodId())
                 .deaths(playerRecord.getDeaths())

@@ -72,11 +72,15 @@ Table champion {
 }
 
 Table contribution {
-    id "int unsigned" [pk, increment]
+    match_id "int unsigned"
+    participant_id "bigint unsigned" [ref: > participant.challenger_id]
     challenge_id "int unsigned" [not null, ref: > participant.challenge_id]
-    participant_id "bigint unsigned" [not null, ref: > participant.challenger_id]
     god_id "int unsigned" [not null, ref: > god.id]
     win bit(1) [not null]
     kills "tinyint unsigned" [not null]
     deaths "tinyint unsigned" [not null]
+
+    indexes {
+        (match_id, participant_id) [pk]
+    }
 }

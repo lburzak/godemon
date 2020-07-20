@@ -16,7 +16,7 @@ public class ContributionDAO implements ContributionRepository {
 
     public ContributionDAO(Connection connection) throws SQLException {
         this.insertContribution =
-                connection.prepareStatement("INSERT INTO contribution (challenege_id, player_id, god_id, win, kills, deaths) VALUES (?, ?, ?, ?, ?, ?)");
+                connection.prepareStatement("INSERT INTO contribution (match_id, participant_id, challenge_id, god_id, win, kills, deaths) VALUES (?, ?, ?, ?, ?, ?, ?)");
         this.selectContributions =
                 connection.prepareStatement("SELECT * FROM contribution WHERE challenge_id = ?");
     }
@@ -49,7 +49,8 @@ public class ContributionDAO implements ContributionRepository {
             while (resultSet.next()) {
                 contributions.add(
                         Contribution.builder()
-                            .playerId(resultSet.getLong("player_id"))
+                            .matchId(resultSet.getInt("match_id"))
+                            .playerId(resultSet.getLong("participant_id"))
                             .godId(resultSet.getInt("god_id"))
                             .win(resultSet.getBoolean("win"))
                             .deaths(resultSet.getShort("deaths"))
