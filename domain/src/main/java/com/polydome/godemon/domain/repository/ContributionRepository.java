@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface ContributionRepository {
     void insertAll(int challengeId, List<Contribution> contributions);
+    List<Contribution> findContributionsByChallenge(int challengeId);
 }
