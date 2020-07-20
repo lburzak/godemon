@@ -9,6 +9,6 @@ public class Contribution {
     private final long playerId;
     private final int godId;
     private final boolean win;
-    private final int kills;
-    private final int deaths;
+    private final short kills;
+    private final short deaths;
 }
