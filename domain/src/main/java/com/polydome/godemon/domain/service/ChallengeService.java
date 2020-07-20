@@ -3,7 +3,9 @@ package com.polydome.godemon.domain.service;
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.ChallengeStage;
 import com.polydome.godemon.domain.entity.Challenger;
+import com.polydome.godemon.domain.entity.Contribution;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
+import com.polydome.godemon.domain.repository.ContributionRepository;
 import com.polydome.godemon.domain.service.matchdetails.MatchDetails;
 import com.polydome.godemon.domain.service.matchdetails.MatchDetailsEndpoint;
 import com.polydome.godemon.domain.service.matchdetails.PlayerRecord;
@@ -11,21 +13,15 @@ import com.polydome.godemon.domain.usecase.GodPool;
 import lombok.AllArgsConstructor;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@AllArgsConstructor
 public class ChallengeService {
     private final MatchDetailsEndpoint matchDetailsEndpoint;
     private final ChallengeRepository challengeRepository;
-
-    public ChallengeService(MatchDetailsEndpoint matchDetailsEndpoint, ChallengeRepository challengeRepository) {
-        this.matchDetailsEndpoint = matchDetailsEndpoint;
-        this.challengeRepository = challengeRepository;
-    }
+    private final ContributionRepository contributionRepository;
 
     public Challenge synchronizeChallenge(int id) {
         Challenge challenge = challengeRepository.findChallenge(id);
@@ -43,6 +39,7 @@ public class ChallengeService {
 
         Map<Integer, Integer> currentGodPool = challenge.getAvailableGods();
         GodPool godPool = new GodPool(currentGodPool);
+        final List<Contribution> contributions = new LinkedList<>();
         SeparatedPlayers players;
         Stream<Integer> ownGods;
 
@@ -54,6 +51,10 @@ public class ChallengeService {
 
             players = matchDetailsToSeparatedPlayers(match, challenge);
             ownGods = players.ownTeam.map(PlayerRecord::getGodId);
+
+            players.ownTeam
+                    .map(this::playerRecordToContribution)
+                    .forEach(contributions::add);
 
             if (ownGods.allMatch(godPool::contains)) {
                 godPool.applyChanges(separatedPlayersToGodPoolChanges(players));
@@ -68,7 +69,18 @@ public class ChallengeService {
         Challenge newChallenge = challengeBuilder.build();
 
         challengeRepository.updateChallenge(newChallenge);
+        contributionRepository.insertAll(challenge.getId(), contributions);
         return newChallenge;
+    }
+
+    private Contribution playerRecordToContribution(PlayerRecord playerRecord) {
+        return Contribution.builder()
+                .playerId(playerRecord.getPlayerId())
+                .godId(playerRecord.getGodId())
+                .deaths(playerRecord.getDeaths())
+                .kills(playerRecord.getKills())
+                .win(playerRecord.getWinStatus() == PlayerRecord.WinStatus.WINNER)
+                .build();
     }
 
     @AllArgsConstructor
