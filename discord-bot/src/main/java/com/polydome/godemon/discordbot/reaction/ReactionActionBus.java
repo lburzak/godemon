@@ -51,7 +51,7 @@ public class ReactionActionBus extends ListenerAdapter implements MessageActionR
 
     @Override
     public void clearAction(long messageId) {
-        cache.remove(messageId);
+        cache.remove(messageId).subscribe();
     }
 
     public void setListener(ActionListener listener) {
