@@ -2,7 +2,7 @@ package com.polydome.godemon.discordbot.listener;
 
 import com.polydome.godemon.discordbot.emote.EmoteManager;
 import com.polydome.godemon.discordbot.reaction.ActionListener;
-import com.polydome.godemon.discordbot.reaction.MessageActionRegistry;
+import com.polydome.godemon.discordbot.view.action.MessageActionRegistry;
 import com.polydome.godemon.discordbot.view.DiscordChallengeView;
 import com.polydome.godemon.discordbot.view.Queue;
 import com.polydome.godemon.discordbot.view.service.GodsDataProvider;

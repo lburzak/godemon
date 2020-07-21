@@ -1,4 +1,4 @@
-package com.polydome.godemon.discordbot.reaction;
+package com.polydome.godemon.discordbot.view.action;
 
 public interface MessageActionRegistry {
     void setAction(long messageId, Action action);

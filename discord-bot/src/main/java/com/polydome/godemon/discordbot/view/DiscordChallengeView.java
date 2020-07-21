@@ -1,9 +1,8 @@
 package com.polydome.godemon.discordbot.view;
 
 import com.polydome.godemon.discordbot.emote.EmoteManager;
-import com.polydome.godemon.discordbot.reaction.Action;
-import com.polydome.godemon.discordbot.reaction.MessageActionRegistry;
-import com.polydome.godemon.discordbot.view.service.AsyncKeyValueCache;
+import com.polydome.godemon.discordbot.view.action.Action;
+import com.polydome.godemon.discordbot.view.action.MessageActionRegistry;
 import com.polydome.godemon.discordbot.view.service.GodsDataProvider;
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.model.ChallengeBrief;
@@ -14,7 +13,6 @@ import net.dv8tion.jda.api.entities.MessageChannel;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.List;
 import java.util.Set;
 
@@ -119,15 +117,13 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
     @Service
     public static class Factory {
-        private final @Named("PropositionCache") AsyncKeyValueCache<Long, Integer> cache;
         private final EmbedFactory embedFactory;
         private final GodsDataProvider godsDataProvider;
         private final EmoteManager emoteManager;
         private final MessageActionRegistry messageActionRegistry;
 
         @Inject
-        public Factory(AsyncKeyValueCache<Long, Integer> cache, EmbedFactory embedFactory, GodsDataProvider godsDataProvider, EmoteManager emoteManager, MessageActionRegistry messageActionRegistry) {
-            this.cache = cache;
+        public Factory(EmbedFactory embedFactory, GodsDataProvider godsDataProvider, EmoteManager emoteManager, MessageActionRegistry messageActionRegistry) {
             this.embedFactory = embedFactory;
             this.godsDataProvider = godsDataProvider;
             this.emoteManager = emoteManager;

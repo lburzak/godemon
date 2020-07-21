@@ -1,4 +1,6 @@
-package com.polydome.godemon.discordbot.reaction;
+package com.polydome.godemon.discordbot.view.action;
+
+import com.polydome.godemon.discordbot.reaction.NoSuchActionException;
 
 public enum Action {
     CREATE_CHALLENGE,

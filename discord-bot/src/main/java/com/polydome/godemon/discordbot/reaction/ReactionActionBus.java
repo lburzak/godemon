@@ -1,5 +1,7 @@
 package com.polydome.godemon.discordbot.reaction;
 
+import com.polydome.godemon.discordbot.view.action.Action;
+import com.polydome.godemon.discordbot.view.action.MessageActionRegistry;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.slf4j.Logger;
