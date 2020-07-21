@@ -60,7 +60,13 @@ public class ChallengeController implements ChallengeContract.Presenter {
 
     @Override
     public void onModeChoice(ChallengeContract.View challengeView, long challengerId, GameMode mode) {
-        startChallengeUseCase.execute(challengerId, mode);
+        try {
+            startChallengeUseCase.execute(challengerId, mode);
+        } catch (AuthenticationException e) {
+            challengeView.showNotification(ChallengeContract.Notification.CHALLENGER_NOT_REGISTERED);
+            return;
+        }
+
         challengeView.showNotification(ChallengeContract.Notification.CHALLENGE_CREATED);
     }
 

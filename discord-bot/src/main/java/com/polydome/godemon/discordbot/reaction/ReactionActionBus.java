@@ -26,6 +26,9 @@ public class ReactionActionBus extends ListenerAdapter implements MessageActionR
 
     @Override
     public void onMessageReactionAdd(@Nonnull MessageReactionAddEvent event) {
+        if (event.getUser().isBot())
+            return;
+
         long messageId = event.getMessageIdLong();
         cache.get(messageId).subscribe(code -> {
             Action action;

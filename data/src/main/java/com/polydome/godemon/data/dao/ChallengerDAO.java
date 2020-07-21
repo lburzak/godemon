@@ -22,7 +22,7 @@ public class ChallengerDAO implements ChallengerRepository {
     }
 
     @Override
-    public Challenger findChallengerById(long id) {
+    public Challenger findChallengerById(long id) throws NoSuchEntityException {
         try {
             findByDiscordIdStatement.setLong(1, id);
             ResultSet row = findByDiscordIdStatement.executeQuery();

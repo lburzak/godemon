@@ -42,7 +42,7 @@ public class MessageActionListener implements ActionListener {
                     Queue.fromIndex(digit).toGameMode()
             );
 
-            messageActionRegistry.clearAction(event.getMessageIdLong());
+            message.delete().queue();
         });
     }
 }

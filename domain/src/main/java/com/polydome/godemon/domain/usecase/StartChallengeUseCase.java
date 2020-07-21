@@ -2,11 +2,11 @@ package com.polydome.godemon.domain.usecase;
 
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.ChallengeStage;
-import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.exception.AuthenticationException;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.ChallengerRepository;
+import com.polydome.godemon.domain.repository.exception.NoSuchEntityException;
 import lombok.AllArgsConstructor;
 
 import java.time.Instant;
@@ -19,9 +19,11 @@ public class StartChallengeUseCase {
     private final ChallengeRepository challengeRepository;
 
     public boolean execute(long discordId, GameMode gameMode) {
-        Challenger challenger = challengerRepository.findChallengerById(discordId);
-        if (challenger == null)
+        try {
+            challengerRepository.findChallengerById(discordId);
+        } catch (NoSuchEntityException e) {
             throw new AuthenticationException("Challenger not registered");
+        }
 
         challengeRepository.createChallenge(
             Challenge.builder()
