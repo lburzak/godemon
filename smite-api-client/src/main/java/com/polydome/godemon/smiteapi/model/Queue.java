@@ -17,6 +17,7 @@ public enum Queue {
     public static Queue fromId(int id) {
         return switch (id) {
             case 440 -> RANKED_DUEL;
+            case 448 -> JOUST;
             default -> UNKNOWN;
         };
     }

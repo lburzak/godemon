@@ -21,17 +21,15 @@ import java.util.Set;
 public class DiscordChallengeView implements ChallengeContract.View {
     private final String mention;
     private final MessageChannel channel;
-    private final AsyncKeyValueCache<Long, Integer> cache;
     private final EmoteManager emoteManager;
     private final MessageActionRegistry messageActionRegistry;
     private final EmbedFactory embedFactory;
     private final GodsDataProvider godsDataProvider;
     private Message outMessage;
 
-    public DiscordChallengeView(String mention, MessageChannel channel, AsyncKeyValueCache<Long, Integer> cache, EmoteManager emoteManager, MessageActionRegistry messageActionRegistry, EmbedFactory embedFactory, GodsDataProvider godsDataProvider, Message outMessage) {
+    public DiscordChallengeView(String mention, MessageChannel channel, EmoteManager emoteManager, MessageActionRegistry messageActionRegistry, EmbedFactory embedFactory, GodsDataProvider godsDataProvider, Message outMessage) {
         this.mention = mention;
         this.channel = channel;
-        this.cache = cache;
         this.emoteManager = emoteManager;
         this.messageActionRegistry = messageActionRegistry;
         this.embedFactory = embedFactory;
@@ -93,7 +91,8 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
         channel.sendMessage(messageContent).queue(message -> {
             outMessage = message;
-            cache.set(message.getIdLong(), challengeId).subscribe();
+            messageActionRegistry.setAction(message.getIdLong(), Action.JOIN_CHALLENGE);
+            messageActionRegistry.setActionArg(message.getIdLong(),0, challengeId);
 
             for (final int id : godsIds) {
                 message.addReaction(godsDataProvider.findById(id).getEmoteId()).queue();
@@ -136,7 +135,7 @@ public class DiscordChallengeView implements ChallengeContract.View {
         }
 
         public DiscordChallengeView create(String authorMention, MessageChannel channel, Message outMessage) {
-            return new DiscordChallengeView(authorMention, channel, cache, emoteManager, messageActionRegistry, embedFactory, godsDataProvider, outMessage);
+            return new DiscordChallengeView(authorMention, channel, emoteManager, messageActionRegistry, embedFactory, godsDataProvider, outMessage);
         }
     }
 }

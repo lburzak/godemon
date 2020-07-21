@@ -1,7 +1,5 @@
 package com.polydome.godemon.discordbot.reaction;
 
-import com.polydome.godemon.discordbot.listener.MessageActionListener;
-import com.polydome.godemon.discordbot.view.service.AsyncKeyValueCache;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.slf4j.Logger;
@@ -14,13 +12,15 @@ import javax.inject.Singleton;
 @Singleton
 @Service
 public class ReactionActionBus extends ListenerAdapter implements MessageActionRegistry {
-    private final AsyncKeyValueCache<Long, Integer> cache;
+    private final ActionCodeStorage codeStorage;
+    private final ActionArgStorage argStorage;
     private final Logger logger;
     private ActionListener listener;
 
     @Inject
-    public ReactionActionBus(AsyncKeyValueCache<Long, Integer> cache, Logger logger) {
-        this.cache = cache;
+    public ReactionActionBus(ActionCodeStorage codeStorage, ActionArgStorage argStorage, Logger logger) {
+        this.codeStorage = codeStorage;
+        this.argStorage = argStorage;
         this.logger = logger;
     }
 
@@ -30,31 +30,39 @@ public class ReactionActionBus extends ListenerAdapter implements MessageActionR
             return;
 
         long messageId = event.getMessageIdLong();
-        cache.get(messageId).subscribe(code -> {
-            Action action;
 
-            try {
-                action = Action.getAction(code);
-            } catch (NoSuchActionException e) {
-                logger.warn("Invalid action code {} has been found on message {}, clearing message", code, messageId);
-                cache.remove(messageId).subscribe();
-                return;
-            }
+        Integer code = codeStorage.getCode(messageId);
+        if (code == null)
+            return;
 
-            switch (action) {
-                case CREATE_CHALLENGE -> listener.onCreateChallenge(event);
-            }
-        });
+        Action action;
+        try {
+            action = Action.getAction(code);
+        } catch (NoSuchActionException e) {
+            logger.warn("Invalid action code {} has been found on message {}, clearing message", code, messageId);
+            codeStorage.clearCode(messageId);
+            return;
+        }
+
+        switch (action) {
+            case CREATE_CHALLENGE -> listener.onCreateChallenge(event);
+            case JOIN_CHALLENGE -> listener.onJoinChallenge(event, argStorage.getIntArg(messageId, 0));
+        }
+    }
+
+    @Override
+    public void setActionArg(long messageId, int index, int arg) {
+        argStorage.setIntArg(messageId, index, arg);
     }
 
     @Override
     public void setAction(long messageId, Action action) {
-        cache.set(messageId, Action.getCode(action)).subscribe();
+        codeStorage.setCode(messageId, Action.getCode(action));
     }
 
     @Override
     public void clearAction(long messageId) {
-        cache.remove(messageId).subscribe();
+        codeStorage.clearCode(messageId);
     }
 
     public void setListener(ActionListener listener) {

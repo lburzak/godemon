@@ -1,7 +1,8 @@
 package com.polydome.godemon.discordbot.reaction;
 
 public enum Action {
-    CREATE_CHALLENGE;
+    CREATE_CHALLENGE,
+    JOIN_CHALLENGE;
 
     private final static Action[] actions = Action.values();
 

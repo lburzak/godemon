@@ -14,7 +14,8 @@ public class SmiteGameModeService {
     public GameMode getGameModeFromId(int id) {
         return switch (Queue.fromId(id)) {
             case RANKED_DUEL -> GameMode.RANKED_DUEL;
-            default -> throw new UnsupportedOperationException(String.format("Unable to match GameMode to Queue[%d]", id));
+            case JOUST -> GameMode.JOUST;
+            case UNKNOWN -> throw new UnsupportedOperationException("Unknown queue id " + id);
         };
     }
 }
