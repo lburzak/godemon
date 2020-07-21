@@ -63,6 +63,9 @@ public class EmbedFactory {
             row++;
         }
 
+        if (row > 1)
+            builder.addField("", godsColumn.toString(), true);
+
         return builder.build();
     }
 
