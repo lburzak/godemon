@@ -9,11 +9,16 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
 public class EmbedFactory {
     private final GodsDataProvider godsDataProvider;
+    private final DateTimeFormatter dateTimeFormatter =
+            DateTimeFormatter.ofPattern("dd-MM-uuuu")
+            .withZone(ZoneId.of("UTC"));
 
     @Inject
     public EmbedFactory(GodsDataProvider godsDataProvider) {
@@ -56,21 +61,23 @@ public class EmbedFactory {
         return builder.build();
     }
 
-    private String createChallengeLabel(ChallengeBrief challengeBrief) {
-        return String.format("%d   %s", challengeBrief.getId(), challengeBrief.getLastUpdate().toString());
-    }
-
     public MessageEmbed challengesList(List<ChallengeBrief> challenges, String targetUserMention) {
-        StringBuilder contentBuilder = new StringBuilder();
+        StringBuilder idColumn = new StringBuilder();
+        StringBuilder gameModeColumn = new StringBuilder();
+        StringBuilder dateColumn = new StringBuilder();
 
         for (final var challenge : challenges) {
-            contentBuilder.append(createChallengeLabel(challenge)).append("\n");
+            idColumn.append(challenge.getId()).append("\n");
+            gameModeColumn.append(challenge.getGameMode()).append("\n");
+            dateColumn.append(dateTimeFormatter.format(challenge.getLastUpdate())).append("\n");
         }
 
         EmbedBuilder embedBuilder = new EmbedBuilder();
         return embedBuilder
                 .setTitle(String.format("%s's challenges", targetUserMention))
-                .setDescription(contentBuilder.toString())
+                .addField("ID", idColumn.toString(), true)
+                .addField("Queue", gameModeColumn.toString(), true)
+                .addField("Last update", dateColumn.toString(), true)
                 .build();
     }
 }
