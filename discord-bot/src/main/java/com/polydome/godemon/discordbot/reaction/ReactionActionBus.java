@@ -36,7 +36,7 @@ public class ReactionActionBus extends ListenerAdapter implements MessageActionR
             try {
                 action = Action.getAction(code);
             } catch (NoSuchActionException e) {
-                logger.warn("Invalid action code has been found on message {}, removing", messageId);
+                logger.warn("Invalid action code {} has been found on message {}, clearing message", code, messageId);
                 cache.remove(messageId).subscribe();
                 return;
             }

@@ -34,7 +34,12 @@ public class EmbedFactory {
 
         builder.setTitle("Challenge");
 
-        builder.addField("Participants", "Alpha\nBeta\nGamma\nDelta", true);
+        StringBuilder participants = new StringBuilder();
+        for (final var participant : status.getParticipants()) {
+            participants.append(participant).append("\n");
+        }
+
+        builder.addField("Participants", participants.toString(), true);
         builder.addField("Stats", String.format("Wins %d\nLoses %d\nKills %d\nDeaths %d", status.getWins(), status.getLoses(), 11, 37), true);
 
         builder.addBlankField(false);

@@ -2,6 +2,7 @@ package com.polydome.godemon.domain.usecase;
 
 import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.ChallengeStage;
+import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.entity.Contribution;
 import com.polydome.godemon.domain.exception.ActionForbiddenException;
 import com.polydome.godemon.domain.exception.AuthenticationException;
@@ -15,6 +16,7 @@ import com.polydome.godemon.domain.service.ChallengeService;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class GetChallengeStatusUseCase {
@@ -61,6 +63,7 @@ public class GetChallengeStatusUseCase {
                 .ended(challenge.getStatus() == ChallengeStage.FAILED)
                 .godToUsesLeft(challenge.getAvailableGods())
                 .godsLeftCount(challenge.getAvailableGods().size())
+                .participants(challenge.getParticipants().stream().map(Challenger::getInGameName).collect(Collectors.toList()))
                 .wins((int) wins)
                 .loses((int) (matchesCount - wins))
                 .build();
