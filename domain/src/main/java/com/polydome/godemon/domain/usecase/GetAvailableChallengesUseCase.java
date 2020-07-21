@@ -17,12 +17,13 @@ public class GetAvailableChallengesUseCase {
 
         return challenges.stream()
                 .map(this::challengeToBrief)
-               .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     private ChallengeBrief challengeToBrief(Challenge challenge) {
         return ChallengeBrief.builder()
                 .id(challenge.getId())
+                .gameMode(challenge.getGameMode())
                 .lastUpdate(challenge.getLastUpdate())
                 .build();
     }
