@@ -4,6 +4,7 @@ import lombok.Getter;
 
 public enum Queue {
     RANKED_DUEL(440),
+    JOUST(448),
     UNKNOWN(0);
 
     @Getter

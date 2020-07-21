@@ -2,7 +2,11 @@ package com.polydome.godemon.discordbotapp.di;
 
 import com.polydome.godemon.data.dao.*;
 import com.polydome.godemon.discordbot.listener.CommandListener;
-import com.polydome.godemon.discordbot.listener.ReactionListener;
+import com.polydome.godemon.discordbot.listener.MessageActionListener;
+import com.polydome.godemon.discordbot.reaction.ActionListener;
+import com.polydome.godemon.discordbot.reaction.ReactionActionBus;
+import com.polydome.godemon.discordbot.view.service.AsyncKeyValueCache;
+import com.polydome.godemon.discordbot.view.service.GodsDataProvider;
 import com.polydome.godemon.domain.repository.*;
 import com.polydome.godemon.domain.service.ChallengeService;
 import com.polydome.godemon.domain.service.GameRulesProvider;
@@ -22,6 +26,9 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import okhttp3.OkHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -39,6 +46,11 @@ import java.sql.SQLException;
 @ComponentScan("com.polydome.godemon.discordbot")
 @ComponentScan( "com.polydome.godemon.discordbotapp")
 public class Config {
+    @Bean
+    public Logger logger(InjectionPoint injectionPoint) {
+        return LoggerFactory.getLogger(injectionPoint.getMethodParameter().getContainingClass());
+    }
+
     // Discord
 
     @Bean
@@ -46,11 +58,13 @@ public class Config {
     public JDA jda(
             final @Value("${discord.botToken}") String botToken,
             final CommandListener commandListener,
-            final ReactionListener reactionListener
+            final ReactionActionBus reactionActionBus,
+            final MessageActionListener messageActionListener
     ) throws LoginException {
+        reactionActionBus.setListener(messageActionListener);
         return JDABuilder
                 .createLight(botToken, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MESSAGES)
-                .addEventListeners(commandListener, reactionListener)
+                .addEventListeners(commandListener, reactionActionBus)
                 .build();
     }
 
@@ -133,13 +147,23 @@ public class Config {
     // Smite data
 
     @Bean
-    public ChampionRepository championRepository(SmiteChampionRepository smiteChampionRepository) {
+    public SmiteGodsDataProvider smiteGodsDataProvider(SmiteChampionRepository smiteChampionRepository) {
         return new SmiteGodsDataProvider(smiteChampionRepository);
+    }
+
+    @Bean
+    public ChampionRepository championRepository(SmiteGodsDataProvider smiteGodsDataProvider) {
+        return smiteGodsDataProvider;
     }
 
     @Bean
     GameRulesProvider gameRulesProvider(GodsRepository godsRepository) {
         return new SmiteRulesProvider(godsRepository);
+    }
+
+    @Bean
+    public GodsDataProvider godsDataProvider(SmiteGodsDataProvider smiteGodsDataProvider) {
+        return smiteGodsDataProvider;
     }
 
     // Data

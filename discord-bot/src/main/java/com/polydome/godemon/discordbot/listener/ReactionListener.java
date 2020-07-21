@@ -16,13 +16,13 @@ import javax.inject.Named;
 @Service
 public class ReactionListener extends ListenerAdapter {
     @Named("PropositionCache")
-    private final AsyncKeyValueCache cache;
+    private final AsyncKeyValueCache<Long, Integer> cache;
     private final ChallengeContract.Presenter presenter;
     private final GodsDataProvider godsDataProvider;
     private final DiscordChallengeView.Factory challengeViewFactory;
 
     @Inject
-    public ReactionListener(AsyncKeyValueCache cache, ChallengeContract.Presenter presenter, GodsDataProvider godsDataProvider, DiscordChallengeView.Factory challengeViewFactory) {
+    public ReactionListener(AsyncKeyValueCache<Long, Integer> cache, ChallengeContract.Presenter presenter, GodsDataProvider godsDataProvider, DiscordChallengeView.Factory challengeViewFactory) {
         this.cache = cache;
         this.presenter = presenter;
         this.godsDataProvider = godsDataProvider;
@@ -38,7 +38,7 @@ public class ReactionListener extends ListenerAdapter {
         if (event.getReaction().isSelf())
             return;
 
-        cache.getIntFromLong(event.getMessageIdLong()).subscribe(challengeId -> {
+        cache.get(event.getMessageIdLong()).subscribe(challengeId -> {
             event.retrieveMessage().queue(outMessage ->
                     presenter.onGodChoice(
                             challengeViewFactory.create(event.getUser().getAsMention(), event.getChannel(), outMessage),

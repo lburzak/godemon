@@ -1,9 +1,11 @@
 package com.polydome.godemon.presentation.contract;
 
+import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeStatus;
 
 import java.util.List;
+import java.util.Set;
 
 public interface ChallengeContract {
     enum Notification {
@@ -23,6 +25,7 @@ public interface ChallengeContract {
         void showChallengeStatus(ChallengeStatus challengeStatus);
         void showRegistrationSuccess(String registeredName);
         void showChallengesList(List<ChallengeBrief> challenges);
+        void showModeChoice(Set<GameMode> modes);
     }
 
     interface Presenter {
@@ -32,5 +35,6 @@ public interface ChallengeContract {
         void onGodChoice(ChallengeContract.View view, long challengerId, int challengeId, int choice);
         void onRegister(ChallengeContract.View view, long challengerId, String hiRezName);
         void onShowChallengesList(ChallengeContract.View view, long challengerId);
+        void onModeChoice(View challengeView, long challengerId, GameMode mode);
     }
 }

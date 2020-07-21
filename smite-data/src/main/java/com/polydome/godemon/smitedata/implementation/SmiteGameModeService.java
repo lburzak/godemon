@@ -7,6 +7,7 @@ public class SmiteGameModeService {
     public int getGameModeId(GameMode gameMode) {
         return switch (gameMode) {
             case RANKED_DUEL -> Queue.RANKED_DUEL.getId();
+            case JOUST -> Queue.JOUST.getId();
         };
     }
 

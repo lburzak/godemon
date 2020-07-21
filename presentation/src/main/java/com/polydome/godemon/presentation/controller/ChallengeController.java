@@ -10,6 +10,7 @@ import com.polydome.godemon.domain.model.ChallengeStatus;
 import com.polydome.godemon.domain.usecase.*;
 import com.polydome.godemon.presentation.contract.ChallengeContract;
 
+import java.util.EnumSet;
 import java.util.List;
 
 public class ChallengeController implements ChallengeContract.Presenter {
@@ -54,7 +55,12 @@ public class ChallengeController implements ChallengeContract.Presenter {
 
     @Override
     public void onCreateChallenge(ChallengeContract.View challengeView, long challengerId) {
-        startChallengeUseCase.execute(challengerId, GameMode.RANKED_DUEL);
+        challengeView.showModeChoice(EnumSet.allOf(GameMode.class));
+    }
+
+    @Override
+    public void onModeChoice(ChallengeContract.View challengeView, long challengerId, GameMode mode) {
+        startChallengeUseCase.execute(challengerId, mode);
         challengeView.showNotification(ChallengeContract.Notification.CHALLENGE_CREATED);
     }
 

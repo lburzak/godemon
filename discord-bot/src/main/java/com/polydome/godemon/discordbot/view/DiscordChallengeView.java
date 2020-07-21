@@ -1,7 +1,11 @@
 package com.polydome.godemon.discordbot.view;
 
+import com.polydome.godemon.discordbot.emote.EmoteManager;
+import com.polydome.godemon.discordbot.reaction.Action;
+import com.polydome.godemon.discordbot.reaction.MessageActionRegistry;
 import com.polydome.godemon.discordbot.view.service.AsyncKeyValueCache;
 import com.polydome.godemon.discordbot.view.service.GodsDataProvider;
+import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeStatus;
 import com.polydome.godemon.presentation.contract.ChallengeContract;
@@ -12,19 +16,24 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.List;
+import java.util.Set;
 
 public class DiscordChallengeView implements ChallengeContract.View {
     private final String mention;
     private final MessageChannel channel;
-    private final @Named("PropositionCache") AsyncKeyValueCache cache;
+    private final AsyncKeyValueCache<Long, Integer> cache;
+    private final EmoteManager emoteManager;
+    private final MessageActionRegistry messageActionRegistry;
     private final EmbedFactory embedFactory;
     private final GodsDataProvider godsDataProvider;
     private Message outMessage;
 
-    public DiscordChallengeView(String mention, MessageChannel channel, AsyncKeyValueCache cache, EmbedFactory embedFactory, GodsDataProvider godsDataProvider, Message outMessage) {
+    public DiscordChallengeView(String mention, MessageChannel channel, AsyncKeyValueCache<Long, Integer> cache, EmoteManager emoteManager, MessageActionRegistry messageActionRegistry, EmbedFactory embedFactory, GodsDataProvider godsDataProvider, Message outMessage) {
         this.mention = mention;
         this.channel = channel;
         this.cache = cache;
+        this.emoteManager = emoteManager;
+        this.messageActionRegistry = messageActionRegistry;
         this.embedFactory = embedFactory;
         this.godsDataProvider = godsDataProvider;
         this.outMessage = outMessage;
@@ -84,7 +93,7 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
         channel.sendMessage(messageContent).queue(message -> {
             outMessage = message;
-            cache.setLongToInt(message.getIdLong(), challengeId).subscribe();
+            cache.set(message.getIdLong(), challengeId).subscribe();
 
             for (final int id : godsIds) {
                 message.addReaction(godsDataProvider.findById(id).getEmoteId()).queue();
@@ -92,21 +101,42 @@ public class DiscordChallengeView implements ChallengeContract.View {
         });
     }
 
+    @Override
+    public void showModeChoice(Set<GameMode> modes) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Select queue:\n");
+
+        for (byte i = 0; i <= Queue.lastIndex; i++)
+            builder.append(String.format("%s %s\n", emoteManager.fromDigit(i), Queue.fromIndex(i).getVisibleName()));
+
+        channel.sendMessage(builder.toString()).queue(msg -> {
+            for (byte i = 0; i <= Queue.lastIndex; i++) {
+                msg.addReaction(emoteManager.fromDigit(i)).queue();
+            }
+
+            messageActionRegistry.setAction(msg.getIdLong(), Action.CREATE_CHALLENGE);
+        });
+    }
+
     @Service
     public static class Factory {
-        private final @Named("PropositionCache") AsyncKeyValueCache cache;
+        private final @Named("PropositionCache") AsyncKeyValueCache<Long, Integer> cache;
         private final EmbedFactory embedFactory;
         private final GodsDataProvider godsDataProvider;
+        private final EmoteManager emoteManager;
+        private final MessageActionRegistry messageActionRegistry;
 
         @Inject
-        public Factory(AsyncKeyValueCache cache, EmbedFactory embedFactory, GodsDataProvider godsDataProvider) {
+        public Factory(AsyncKeyValueCache<Long, Integer> cache, EmbedFactory embedFactory, GodsDataProvider godsDataProvider, EmoteManager emoteManager, MessageActionRegistry messageActionRegistry) {
             this.cache = cache;
             this.embedFactory = embedFactory;
             this.godsDataProvider = godsDataProvider;
+            this.emoteManager = emoteManager;
+            this.messageActionRegistry = messageActionRegistry;
         }
 
         public DiscordChallengeView create(String authorMention, MessageChannel channel, Message outMessage) {
-            return new DiscordChallengeView(authorMention, channel, cache, embedFactory, godsDataProvider, outMessage);
+            return new DiscordChallengeView(authorMention, channel, cache, emoteManager, messageActionRegistry, embedFactory, godsDataProvider, outMessage);
         }
     }
 }

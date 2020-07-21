@@ -9,16 +9,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class InMemoryAsyncKeyValueCache implements AsyncKeyValueCache {
+public class InMemoryAsyncKeyValueCache implements AsyncKeyValueCache<Long, Integer> {
     Map<Long, Integer> data = new HashMap<>();
 
     @Override
-    public Completable setLongToInt(long key, int value) {
+    public Completable set(Long key, Integer value) {
         return Completable.fromRunnable(() -> data.put(key, value));
     }
 
     @Override
-    public Maybe<Integer> getIntFromLong(long key) {
+    public Maybe<Integer> get(Long key) {
         return Maybe.create(emitter -> {
             if (!data.containsKey(key))
                 emitter.onComplete();
@@ -26,5 +26,10 @@ public class InMemoryAsyncKeyValueCache implements AsyncKeyValueCache {
                 emitter.onSuccess(data.get(key));
             }
         });
+    }
+
+    @Override
+    public Completable remove(Long key) {
+        return Completable.fromRunnable(() -> data.remove(key));
     }
 }
