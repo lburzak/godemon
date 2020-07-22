@@ -1,7 +1,6 @@
 package com.polydome.godemon.domain.service;
 
 import com.polydome.godemon.domain.entity.Challenge;
-import com.polydome.godemon.domain.entity.ChallengeStage;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.entity.Contribution;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
@@ -45,11 +44,6 @@ public class ChallengeService {
         Stream<Integer> ownGods;
 
         for (final var match : fetchedMatches) {
-            if (godPool.distinctCount() > challenge.getParticipants().size()) {
-                challengeBuilder.status(ChallengeStage.FAILED);
-                break;
-            }
-
             players = matchDetailsToSeparatedPlayers(match, challenge);
             ownGods = players.ownTeam.map(PlayerRecord::getGodId);
 
@@ -91,10 +85,12 @@ public class ChallengeService {
         public final Stream<PlayerRecord> ownTeam;
     }
 
-    private List<Integer> dropRandom(List<Integer> ids, long count) {
-        while (count > 0) {
-            ids.remove(ThreadLocalRandom.current().nextInt(0, ids.size()));
-            count--;
+    private List<Integer> squash(List<Integer> ids, long outputSize) {
+        int size = ids.size();
+
+        while (size > outputSize) {
+            ids.remove(ThreadLocalRandom.current().nextInt(0, size));
+            size--;
         }
 
         return ids;
@@ -116,7 +112,7 @@ public class ChallengeService {
             boolean isWin = anyParticipant.get().getWinStatus() == PlayerRecord.WinStatus.WINNER;
 
             if (isWin) {
-                return dropRandom(
+                return squash(
                             separatedPlayers.anyTeam
                                 .filter(player -> player.getWinStatus() == PlayerRecord.WinStatus.LOSER)
                                 .map(PlayerRecord::getGodId)
