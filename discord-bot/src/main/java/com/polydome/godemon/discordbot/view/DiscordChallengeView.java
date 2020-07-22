@@ -95,13 +95,20 @@ public class DiscordChallengeView implements ChallengeContract.View {
     }
 
     @Override
-    public void showChallengeStatus(ChallengeStatus challengeStatus, int challengeId) {
-        channel.sendMessage(embedFactory.challengeStatus(challengeStatus)).queue(msg -> {
+    public void showIntermediateChallengeStatus(ChallengeStatus challengeStatus, int challengeId) {
+        channel.sendMessage(embedFactory.challengeStatus(challengeStatus, true)).queue(msg -> {
+            outMessage = msg;
+
             messageActionRegistry.setAction(msg.getIdLong(), Action.JOIN_CHALLENGE);
             messageActionRegistry.setActionArg(msg.getIdLong(), 0, challengeId);
 
             msg.addReaction(msg.getJDA().getEmoteById(735488600980062210L)).queue();
         });
+    }
+
+    @Override
+    public void showFinalChallengeStatus(ChallengeStatus challengeStatus, int challengeId) {
+        outMessage.editMessage(embedFactory.challengeStatus(challengeStatus, false)).queue();
     }
 
     @Override

@@ -22,7 +22,8 @@ public interface ChallengeContract {
         void showProposition(int challengeId, int[] godsIds);
         void showNotification(Notification notification);
         void showStartingGod(int godId);
-        void showChallengeStatus(ChallengeStatus challengeStatus, int challengeId);
+        void showIntermediateChallengeStatus(ChallengeStatus challengeStatus, int challengeId);
+        void showFinalChallengeStatus(ChallengeStatus challengeStatus, int challengeId);
         void showRegistrationSuccess(String registeredName);
         void showChallengesList(List<ChallengeBrief> challenges);
         void showModeChoice(Set<GameMode> modes);

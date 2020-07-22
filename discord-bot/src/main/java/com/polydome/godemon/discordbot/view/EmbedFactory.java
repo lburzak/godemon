@@ -31,7 +31,7 @@ public class EmbedFactory {
         return String.format("`%dx` <%s> **%3$20s**", usesLeft, godData.getEmoteId(), godData.getName());
     }
 
-    public MessageEmbed challengeStatus(ChallengeStatus status) {
+    public MessageEmbed challengeStatus(ChallengeStatus status, boolean updatingFlag) {
         EmbedBuilder builder = new EmbedBuilder();
 
         builder.setTitle("Challenge");
@@ -69,6 +69,9 @@ public class EmbedFactory {
         builder.addBlankField(false);
         builder.addField("","<:join:735488600980062210> Join", true);
         builder.addField("","<:history:735491281798823959> History", true);
+
+        if (updatingFlag)
+            builder.setFooter("Updating...");
 
         return builder.build();
     }

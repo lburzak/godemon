@@ -25,7 +25,7 @@ public class GetChallengeStatusUseCase {
     private final ChallengeService challengeService;
     private final ContributionRepository contributionRepository;
 
-    public ChallengeStatus execute(long challengerId, int challengeId) throws ActionForbiddenException, AuthenticationException, NoSuchChallengeException {
+    public ChallengeStatus execute(long challengerId, int challengeId, boolean doUpdate) throws ActionForbiddenException, AuthenticationException, NoSuchChallengeException {
         try {
             challengerRepository.findChallengerById(challengerId);
         } catch (NoSuchEntityException e) {
@@ -43,7 +43,9 @@ public class GetChallengeStatusUseCase {
         if (challenge.getParticipants().stream().noneMatch(challenger -> challenger.getId() == challengerId))
             throw new ActionForbiddenException(String.format("Challenger[%d] does not participate in Challenge[%d]", challengerId, challengeId));
 
-        challengeService.synchronizeChallenge(challengeId);
+        if (doUpdate)
+            challengeService.synchronizeChallenge(challengeId);
+
         challenge = challengeRepository.findChallenge(challengeId);
 
         List<Contribution> contributions = contributionRepository.findContributionsByChallenge(challengeId);
