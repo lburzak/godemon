@@ -90,7 +90,7 @@ public class ChallengeController implements ChallengeContract.Presenter {
     public void onShowChallengeStatus(ChallengeContract.View challengeView, int challengeId, long challengerId) {
         try {
             ChallengeStatus status = getChallengeStatusUseCase.execute(challengerId, challengeId);
-            challengeView.showChallengeStatus(status);
+            challengeView.showChallengeStatus(status, challengeId);
         } catch (AuthenticationException e) {
             challengeView.showNotification(ChallengeContract.Notification.CHALLENGER_NOT_REGISTERED);
         } catch (NoSuchChallengeException e) {

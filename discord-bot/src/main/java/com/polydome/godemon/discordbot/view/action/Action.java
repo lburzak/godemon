@@ -4,6 +4,7 @@ import com.polydome.godemon.discordbot.reaction.NoSuchActionException;
 
 public enum Action {
     CREATE_CHALLENGE,
+    ACCEPT_CHALLENGE,
     JOIN_CHALLENGE;
 
     private final static Action[] actions = Action.values();

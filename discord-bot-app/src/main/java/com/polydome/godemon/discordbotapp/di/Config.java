@@ -24,6 +24,7 @@ import com.squareup.moshi.Moshi;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +64,8 @@ public class Config {
     ) throws LoginException {
         reactionActionBus.setListener(messageActionListener);
         return JDABuilder
-                .createLight(botToken, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MESSAGES)
+                .createLight(botToken, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_EMOJIS)
+                .enableCache(CacheFlag.EMOTE)
                 .addEventListeners(commandListener, reactionActionBus)
                 .build();
     }

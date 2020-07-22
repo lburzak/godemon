@@ -50,9 +50,11 @@ public class ReactionActionBus extends ListenerAdapter implements MessageActionR
             case CREATE_CHALLENGE:
                 listener.onCreateChallenge(event);
                 break;
+            case ACCEPT_CHALLENGE:
+                listener.onAcceptChallenge(event, argStorage.getIntArg(messageId, 0));
+                break;
             case JOIN_CHALLENGE:
                 listener.onJoinChallenge(event, argStorage.getIntArg(messageId, 0));
-                break;
         }
     }
 

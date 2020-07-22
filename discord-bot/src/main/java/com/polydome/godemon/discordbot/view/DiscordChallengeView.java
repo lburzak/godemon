@@ -8,9 +8,9 @@ import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeStatus;
 import com.polydome.godemon.presentation.contract.ChallengeContract;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -95,8 +95,13 @@ public class DiscordChallengeView implements ChallengeContract.View {
     }
 
     @Override
-    public void showChallengeStatus(ChallengeStatus challengeStatus) {
-        channel.sendMessage(embedFactory.challengeStatus(challengeStatus)).queue();
+    public void showChallengeStatus(ChallengeStatus challengeStatus, int challengeId) {
+        channel.sendMessage(embedFactory.challengeStatus(challengeStatus)).queue(msg -> {
+            messageActionRegistry.setAction(msg.getIdLong(), Action.JOIN_CHALLENGE);
+            messageActionRegistry.setActionArg(msg.getIdLong(), 0, challengeId);
+
+            msg.addReaction(msg.getJDA().getEmoteById(735488600980062210L)).queue();
+        });
     }
 
     @Override
@@ -108,7 +113,7 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
         channel.sendMessage(messageContent).queue(message -> {
             outMessage = message;
-            messageActionRegistry.setAction(message.getIdLong(), Action.JOIN_CHALLENGE);
+            messageActionRegistry.setAction(message.getIdLong(), Action.ACCEPT_CHALLENGE);
             messageActionRegistry.setActionArg(message.getIdLong(),0, challengeId);
 
             for (final int id : godsIds) {
@@ -158,6 +163,10 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
         public DiscordChallengeView create(String authorMention, MessageChannel channel, Message outMessage) {
             return new DiscordChallengeView(authorMention, channel, emoteManager, messageActionRegistry, embedFactory, godsDataProvider, outMessage);
+        }
+
+        public DiscordChallengeView create(MessageReceivedEvent event) {
+            return create(event.getAuthor().getAsMention(), event.getChannel(), null);
         }
     }
 }

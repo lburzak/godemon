@@ -55,13 +55,22 @@ public class MessageActionListener implements ActionListener {
     }
 
     @Override
-    public void onJoinChallenge(MessageReactionAddEvent event, int challengeId) {
+    public void onAcceptChallenge(MessageReactionAddEvent event, int challengeId) {
         event.retrieveMessage().queue(outMessage ->
                 presenter.onGodChoice(
                         challengeViewFactory.create(event.getUser().getAsMention(), event.getChannel(), outMessage),
                         event.getUserIdLong(),
                         challengeId,
                         godsDataProvider.findByEmote(emoteIdFromEmote(event.getReactionEmote())).getId())
+        );
+    }
+
+    @Override
+    public void onJoinChallenge(MessageReactionAddEvent event, int challengeId) {
+        presenter.onJoinChallenge(
+                challengeViewFactory.create(event.getUser().getAsMention(), event.getChannel(), null),
+                challengeId,
+                event.getUserIdLong()
         );
     }
 }

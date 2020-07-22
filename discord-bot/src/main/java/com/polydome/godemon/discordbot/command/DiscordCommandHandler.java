@@ -16,10 +16,6 @@ public class DiscordCommandHandler {
         this.challengeViewFactory = challengeViewFactory;
     }
 
-    private ChallengeContract.View createInputChallengeView(MessageReceivedEvent event) {
-        return challengeViewFactory.create(event.getAuthor().getAsMention(), event.getChannel(), null);
-    }
-
     public void onCommand(CommandLine commandLine, MessageReceivedEvent event) {
         long authorId = event.getAuthor().getIdLong();
 
@@ -28,7 +24,7 @@ public class DiscordCommandHandler {
                 if (commandLine.argsCount == 1) {
                     if (commandLine.args[0].equals("new")) {
                         challengePresenter.onCreateChallenge(
-                                createInputChallengeView(event),
+                                challengeViewFactory.create(event),
                                 event.getAuthor().getIdLong()
                         );
                     } else {
@@ -40,14 +36,14 @@ public class DiscordCommandHandler {
                         }
 
                         challengePresenter.onShowChallengeStatus(
-                                createInputChallengeView(event),
+                                challengeViewFactory.create(event),
                                 challengeId,
                                 authorId
                         );
                     }
                 } else {
                     challengePresenter.onShowChallengesList(
-                            createInputChallengeView(event),
+                            challengeViewFactory.create(event),
                             authorId
                     );
                 }
@@ -56,21 +52,21 @@ public class DiscordCommandHandler {
             }
             case "me":
                 challengePresenter.onRegister(
-                        createInputChallengeView(event),
+                        challengeViewFactory.create(event),
                         authorId,
                         commandLine.args[0]
                 );
                 break;
             case "join":
                 challengePresenter.onJoinChallenge(
-                    createInputChallengeView(event),
+                    challengeViewFactory.create(event),
                     Integer.parseInt(commandLine.args[0]),
                     authorId
                 );
                 break;
             case "lobby":
                 challengePresenter.onLobbyRequest(
-                        createInputChallengeView(event),
+                        challengeViewFactory.create(event),
                         event.getAuthor().getIdLong()
                 );
                 break;

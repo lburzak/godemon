@@ -42,7 +42,7 @@ public class EmbedFactory {
         }
 
         builder.addField("Participants", participants.toString(), true);
-        builder.addField("Stats", String.format("Wins %d\nLoses %d\nKills %d\nDeaths %d", status.getWins(), status.getLoses(), 11, 37), true);
+        builder.addField("Stats", String.format("Wins %d\nLoses %d\nKills %d\nDeaths %d", status.getWins(), status.getLoses(),  0, 0), true);
 
         builder.addBlankField(false);
         GodData godData;
@@ -67,6 +67,10 @@ public class EmbedFactory {
 
         if (row > 1)
             builder.addField("", godsColumn.toString(), true);
+
+        builder.addBlankField(false);
+        builder.addField("","<:join:735488600980062210> Join", true);
+        builder.addField("","<:history:735491281798823959> History", true);
 
         return builder.build();
     }

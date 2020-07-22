@@ -58,6 +58,8 @@ public class SmiteMatchDetailsEndpoint implements MatchDetailsEndpoint {
     public List<MatchDetails> fetchNewerMatches(int playerId, GameMode mode, Instant instant) {
         return smiteApiClient.getMatchHistory(playerId)
                 .flatMapObservable(Observable::fromIterable)
+                // TODO: optimize
+                .filter(match -> match.getDate() != null)
                 .takeWhile(match -> match.getDate().isAfter(instant))
                 .filter(match -> match.getQueue() == modeToQueue(mode))
                 .map(RecentMatch::getId)
