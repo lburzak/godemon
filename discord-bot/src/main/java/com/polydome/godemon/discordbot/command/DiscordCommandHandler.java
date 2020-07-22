@@ -37,21 +37,29 @@ public class DiscordCommandHandler {
                             authorId
                     );
                 }
+
+                break;
             }
-            case "me": challengePresenter.onRegister(
-                    createInputChallengeView(event),
-                    authorId,
-                    commandLine.args[0]
-            );
-            case "challenge-create": challengePresenter.onCreateChallenge(
+            case "me":
+                challengePresenter.onRegister(
+                        createInputChallengeView(event),
+                        authorId,
+                        commandLine.args[0]
+                );
+                break;
+            case "challenge-create":
+                challengePresenter.onCreateChallenge(
                     createInputChallengeView(event),
                     authorId
-            );
-            case "join":  challengePresenter.onJoinChallenge(
+                );
+                break;
+            case "join":
+                challengePresenter.onJoinChallenge(
                     createInputChallengeView(event),
                     Integer.parseInt(commandLine.args[0]),
                     authorId
-            );
+                );
+                break;
         }
     }
 }
