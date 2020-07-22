@@ -48,25 +48,23 @@ public class EmbedFactory {
         GodData godData;
 
         final int COLUMNS = 3;
-        final int rows = status.getGodsLeftCount() / COLUMNS;
 
-        int row = 1;
-        StringBuilder godsColumn = new StringBuilder();
-        for (var entry : status.getGodToUsesLeft().entrySet()) {
+        final StringBuilder[] columns = new StringBuilder[] {
+                new StringBuilder(),
+                new StringBuilder(),
+                new StringBuilder()
+        };
+
+        int i = 0;
+        for (final var entry : status.getGodToUsesLeft().entrySet()) {
             godData = godsDataProvider.findById(entry.getKey());
-            godsColumn.append(createGodLabel(godData, entry.getValue())).append("\n");
-
-            if (row == rows) {
-                builder.addField("", godsColumn.toString(), true);
-                godsColumn = new StringBuilder();
-                row = 1;
-            }
-
-            row++;
+            columns[i % COLUMNS].append(createGodLabel(godData, entry.getValue())).append("\n");
+            i++;
         }
 
-        if (row > 1)
-            builder.addField("", godsColumn.toString(), true);
+        for (final var column : columns) {
+            builder.addField("", column.toString(), true);
+        }
 
         builder.addBlankField(false);
         builder.addField("","<:join:735488600980062210> Join", true);
