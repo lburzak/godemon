@@ -2,6 +2,7 @@ package com.polydome.godemon.discordbot.view;
 
 import com.polydome.godemon.discordbot.view.service.GodData;
 import com.polydome.godemon.discordbot.view.service.GodsDataProvider;
+import com.polydome.godemon.discordbot.view.table.TableBuilder;
 import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeStatus;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -12,6 +13,7 @@ import javax.inject.Inject;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmbedFactory {
@@ -70,22 +72,21 @@ public class EmbedFactory {
     }
 
     public MessageEmbed challengesList(List<ChallengeBrief> challenges, String targetUserMention) {
-        StringBuilder idColumn = new StringBuilder();
-        StringBuilder gameModeColumn = new StringBuilder();
-        StringBuilder dateColumn = new StringBuilder();
+        final var COLUMN_ID = "ID";
+        final var COLUMN_QUEUE = "Queue";
+        final var COLUMN_LAST_UPDATE = "Last Update";
+
+        TableBuilder table = new TableBuilder("Your Challenges");
+        table.addColumns(COLUMN_ID, COLUMN_QUEUE, COLUMN_LAST_UPDATE);
 
         for (final var challenge : challenges) {
-            idColumn.append(challenge.getId()).append("\n");
-            gameModeColumn.append(challenge.getGameMode()).append("\n");
-            dateColumn.append(dateTimeFormatter.format(challenge.getLastUpdate())).append("\n");
+            table.addRecord(Map.ofEntries(
+                    Map.entry(COLUMN_ID, String.valueOf(challenge.getId())),
+                    Map.entry(COLUMN_QUEUE, String.valueOf(challenge.getGameMode())),
+                    Map.entry(COLUMN_LAST_UPDATE, dateTimeFormatter.format(challenge.getLastUpdate()))
+            ));
         }
 
-        EmbedBuilder embedBuilder = new EmbedBuilder();
-        return embedBuilder
-                .setTitle(String.format("%s's challenges", targetUserMention))
-                .addField("ID", idColumn.toString(), true)
-                .addField("Queue", gameModeColumn.toString(), true)
-                .addField("Last update", dateColumn.toString(), true)
-                .build();
+        return table.buildEmbed();
     }
 }
