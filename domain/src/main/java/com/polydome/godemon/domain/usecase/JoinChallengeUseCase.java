@@ -36,7 +36,6 @@ public class JoinChallengeUseCase {
 
         // TODO: Check if challenge exists
 
-        challengeService.synchronizeChallenge(challengeId);
         Challenge challenge = challengeRepository.findChallenge(challengeId);
         if (challenge == null) {
             throw new NoSuchChallengeException(challengeId);
