@@ -20,14 +20,16 @@ public class ChallengeController implements ChallengeContract.Presenter {
     private final IntroduceUseCase introduceUseCase;
     private final StartChallengeUseCase startChallengeUseCase;
     private final GetAvailableChallengesUseCase getAvailableChallengesUseCase;
+    private final GetAllChallengesUseCase getAllChallengesUseCase;
 
-    public ChallengeController(JoinChallengeUseCase joinChallengeUseCase, AcceptChallengeUseCase acceptChallengeUseCase, GetChallengeStatusUseCase getChallengeStatusUseCase, IntroduceUseCase introduceUseCase, StartChallengeUseCase startChallengeUseCase, GetAvailableChallengesUseCase getAvailableChallengesUseCase) {
+    public ChallengeController(JoinChallengeUseCase joinChallengeUseCase, AcceptChallengeUseCase acceptChallengeUseCase, GetChallengeStatusUseCase getChallengeStatusUseCase, IntroduceUseCase introduceUseCase, StartChallengeUseCase startChallengeUseCase, GetAvailableChallengesUseCase getAvailableChallengesUseCase, GetAllChallengesUseCase getAllChallengesUseCase) {
         this.joinChallengeUseCase = joinChallengeUseCase;
         this.acceptChallengeUseCase = acceptChallengeUseCase;
         this.getChallengeStatusUseCase = getChallengeStatusUseCase;
         this.introduceUseCase = introduceUseCase;
         this.startChallengeUseCase = startChallengeUseCase;
         this.getAvailableChallengesUseCase = getAvailableChallengesUseCase;
+        this.getAllChallengesUseCase = getAllChallengesUseCase;
     }
 
     @Override
@@ -102,5 +104,18 @@ public class ChallengeController implements ChallengeContract.Presenter {
     public void onGodChoice(ChallengeContract.View view, long challengerId, int challengeId, int choice) {
         acceptChallengeUseCase.execute(challengerId, challengeId, choice);
         view.showStartingGod(choice);
+    }
+
+    @Override
+    public void onLobbyRequest(ChallengeContract.View challengeView, long challengerId) {
+        List<ChallengeBrief> challenges = List.of();
+
+        try {
+            challenges = getAllChallengesUseCase.execute(challengerId);
+        } catch (AuthenticationException e) {
+            challengeView.showNotification(ChallengeContract.Notification.CHALLENGER_NOT_REGISTERED);
+        }
+
+        challengeView.showLobby(challenges);
     }
 }

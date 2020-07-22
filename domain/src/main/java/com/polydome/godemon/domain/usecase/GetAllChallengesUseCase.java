@@ -15,7 +15,7 @@ public class GetAllChallengesUseCase {
     private final ChallengerRepository challengerRepository;
     private final ChallengeRepository challengeRepository;
 
-    List<ChallengeBrief> execute(long discordId) {
+    public List<ChallengeBrief> execute(long discordId) throws AuthenticationException {
         if (!challengerRepository.existsChallenger(discordId)) {
             throw new AuthenticationException("Challenger not registered");
         }

@@ -26,6 +26,7 @@ public interface ChallengeContract {
         void showRegistrationSuccess(String registeredName);
         void showChallengesList(List<ChallengeBrief> challenges);
         void showModeChoice(Set<GameMode> modes);
+        void showLobby(List<ChallengeBrief> challenges);
     }
 
     interface Presenter {
@@ -36,5 +37,6 @@ public interface ChallengeContract {
         void onRegister(ChallengeContract.View view, long challengerId, String hiRezName);
         void onShowChallengesList(ChallengeContract.View view, long challengerId);
         void onModeChoice(View challengeView, long challengerId, GameMode mode);
+        void onLobbyRequest(View challengeView, long challengerId);
     }
 }

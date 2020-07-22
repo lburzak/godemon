@@ -89,4 +89,23 @@ public class EmbedFactory {
 
         return table.buildEmbed();
     }
+
+    public MessageEmbed lobby(List<ChallengeBrief> challenges) {
+        final var COLUMN_ID = "ID";
+        final var COLUMN_QUEUE = "Queue";
+        final var COLUMN_LAST_UPDATE = "Last Update";
+
+        TableBuilder table = new TableBuilder(":crossed_swords: Lobby :crossed_swords:");
+        table.addColumns(COLUMN_ID, COLUMN_QUEUE, COLUMN_LAST_UPDATE);
+
+        for (final var challenge : challenges) {
+            table.addRecord(Map.ofEntries(
+                    Map.entry(COLUMN_ID, String.valueOf(challenge.getId())),
+                    Map.entry(COLUMN_QUEUE, String.valueOf(challenge.getGameMode())),
+                    Map.entry(COLUMN_LAST_UPDATE, dateTimeFormatter.format(challenge.getLastUpdate()))
+            ));
+        }
+
+        return table.buildEmbed();
+    }
 }

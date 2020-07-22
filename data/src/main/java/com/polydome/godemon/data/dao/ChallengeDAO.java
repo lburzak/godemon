@@ -104,6 +104,8 @@ public class ChallengeDAO implements ChallengeRepository {
     public List<Challenge> findAllChallenges() throws CRUDException {
         try {
             ResultSet resultSet = selectAllChallenges.executeQuery();
+
+            List<Challenge> challenges = new LinkedList<>();
             Challenge.ChallengeBuilder builder =  Challenge.builder();
             int id;
 
@@ -116,12 +118,14 @@ public class ChallengeDAO implements ChallengeRepository {
 
                 builder.availableGods(findAvailableGods(id));
                 builder.participants(findParticipants(id));
+
+                challenges.add(builder.build());
             }
+
+            return challenges;
         } catch (SQLException e) {
             throw new CRUDException(e);
         }
-
-        return List.of();
     }
 
     private Map<Integer, Integer> findAvailableGods(int challengeId) throws SQLException {

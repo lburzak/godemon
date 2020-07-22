@@ -75,10 +75,11 @@ public class Config {
             final GetChallengeStatusUseCase getChallengeStatusUseCase,
             final IntroduceUseCase introduceUseCase,
             final JoinChallengeUseCase joinChallengeUseCase,
-            final StartChallengeUseCase startChallengeUseCase
+            final StartChallengeUseCase startChallengeUseCase,
+            final GetAllChallengesUseCase getAllChallengesUseCase
     ) {
         return new ChallengeController(joinChallengeUseCase, acceptChallengeUseCase, getChallengeStatusUseCase, introduceUseCase,
-                startChallengeUseCase, getAvailableChallengesUseCase);
+                startChallengeUseCase, getAvailableChallengesUseCase, getAllChallengesUseCase);
     }
 
     // Domain
@@ -135,6 +136,14 @@ public class Config {
             ChallengeRepository challengeRepository
     ) {
         return new StartChallengeUseCase(challengerRepository, challengeRepository);
+    }
+
+    @Bean
+    public GetAllChallengesUseCase getAllChallengesUseCase(
+            ChallengerRepository challengerRepository,
+            ChallengeRepository challengeRepository
+    ) {
+        return new GetAllChallengesUseCase(challengerRepository, challengeRepository);
     }
 
     @Bean

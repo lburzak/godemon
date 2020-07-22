@@ -60,6 +60,12 @@ public class DiscordCommandHandler {
                     authorId
                 );
                 break;
+            case "lobby":
+                challengePresenter.onLobbyRequest(
+                        createInputChallengeView(event),
+                        event.getAuthor().getIdLong()
+                );
+                break;
         }
     }
 }

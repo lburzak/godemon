@@ -8,6 +8,7 @@ import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeStatus;
 import com.polydome.godemon.presentation.contract.ChallengeContract;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import org.springframework.stereotype.Service;
@@ -131,6 +132,13 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
             messageActionRegistry.setAction(msg.getIdLong(), Action.CREATE_CHALLENGE);
         });
+    }
+
+    @Override
+    public void showLobby(List<ChallengeBrief> challenges) {
+        channel.sendMessage(
+                embedFactory.lobby(challenges)
+        ).queue();
     }
 
     @Service
