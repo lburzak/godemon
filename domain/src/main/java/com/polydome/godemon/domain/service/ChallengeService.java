@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -90,6 +91,15 @@ public class ChallengeService {
         public final Stream<PlayerRecord> ownTeam;
     }
 
+    private List<Integer> dropRandom(List<Integer> ids, long count) {
+        while (count > 0) {
+            ids.remove(ThreadLocalRandom.current().nextInt(0, ids.size()));
+            count--;
+        }
+
+        return ids;
+    }
+
     private SeparatedPlayers matchDetailsToSeparatedPlayers(MatchDetails matchDetails, Challenge challenge) {
         Stream<PlayerRecord> players = Arrays.stream(matchDetails.getPlayers());
         Stream<PlayerRecord> participants = players
@@ -106,9 +116,14 @@ public class ChallengeService {
             boolean isWin = anyParticipant.get().getWinStatus() == PlayerRecord.WinStatus.WINNER;
 
             if (isWin) {
-                return separatedPlayers.anyTeam
-                        .filter(player -> player.getWinStatus() == PlayerRecord.WinStatus.LOSER)
-                        .map(PlayerRecord::getGodId)
+                return dropRandom(
+                            separatedPlayers.anyTeam
+                                .filter(player -> player.getWinStatus() == PlayerRecord.WinStatus.LOSER)
+                                .map(PlayerRecord::getGodId)
+                                .collect(Collectors.toList()),
+                                separatedPlayers.ownTeam.count()
+                            )
+                        .stream()
                         .map(godId -> new GodPool.Change(GodPool.ChangeType.GRANT, godId));
             } else {
                 return separatedPlayers.ownTeam
