@@ -67,10 +67,24 @@ public class MessageActionListener implements ActionListener {
 
     @Override
     public void onJoinChallenge(MessageReactionAddEvent event, int challengeId) {
-        presenter.onJoinChallenge(
-                challengeViewFactory.create(event.getUser().getAsMention(), event.getChannel(), null),
-                challengeId,
-                event.getUserIdLong()
-        );
+        if (event.getReactionEmote().isEmote()) {
+            if (event.getReactionEmote().getIdLong() == 735567114638852178L) {
+                event.retrieveMessage().queue(msg -> {
+                    presenter.onUpdateChallenge(
+                            challengeViewFactory.create(event.getUser().getAsMention(), event.getChannel(), msg),
+                            event.getUserIdLong(),
+                            challengeId
+                    );
+                });
+            } else if (event.getReactionEmote().getIdLong() == 735488600980062210L) {
+                event.retrieveMessage().queue(msg -> {
+                    presenter.onJoinChallenge(
+                            challengeViewFactory.create(event.getUser().getAsMention(), event.getChannel(), null),
+                            challengeId,
+                            event.getUserIdLong()
+                    );
+                });
+            }
+        }
     }
 }

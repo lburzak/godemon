@@ -8,11 +8,12 @@ import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeStatus;
 import com.polydome.godemon.presentation.contract.ChallengeContract;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.springframework.stereotype.Service;
-
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Set;
@@ -109,6 +110,7 @@ public class DiscordChallengeView implements ChallengeContract.View {
     @Override
     public void showFinalChallengeStatus(ChallengeStatus challengeStatus, int challengeId) {
         outMessage.editMessage(embedFactory.challengeStatus(challengeStatus, false)).queue();
+        outMessage.addReaction(outMessage.getJDA().getEmoteById(735567114638852178L)).queue();
     }
 
     @Override
@@ -144,6 +146,22 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
             messageActionRegistry.setAction(msg.getIdLong(), Action.CREATE_CHALLENGE);
         });
+    }
+
+    @Override
+    public void showUpdating() {
+        outMessage.clearReactions(outMessage.getJDA().getEmoteById(735567114638852178L)).queue();
+
+        MessageEmbed embed = outMessage.getEmbeds().get(0);
+        EmbedBuilder builder = new EmbedBuilder();
+
+        builder.setTitle(embed.getTitle());
+        for (final var field : embed.getFields())
+            builder.addField(field);
+
+        builder.setFooter("Updating...");
+
+        outMessage.editMessage(builder.build()).queue();
     }
 
     @Override

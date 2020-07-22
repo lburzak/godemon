@@ -69,6 +69,7 @@ public class EmbedFactory {
         builder.addBlankField(false);
         builder.addField("","<:join:735488600980062210> Join", true);
         builder.addField("","<:history:735491281798823959> History", true);
+        builder.addField("","<:sync:735567114638852178> Sync", true);
 
         if (updatingFlag)
             builder.setFooter("Updating...");

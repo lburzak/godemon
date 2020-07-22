@@ -120,4 +120,20 @@ public class ChallengeController implements ChallengeContract.Presenter {
 
         challengeView.showLobby(challenges);
     }
+
+    @Override
+    public void onUpdateChallenge(ChallengeContract.View challengeView, long challengerId, int challengeId) {
+        challengeView.showUpdating();
+
+        try {
+            ChallengeStatus status = getChallengeStatusUseCase.execute(challengerId, challengeId, true);
+            challengeView.showFinalChallengeStatus(status, challengeId);
+        } catch (AuthenticationException e) {
+            challengeView.showNotification(ChallengeContract.Notification.CHALLENGER_NOT_REGISTERED);
+        } catch (NoSuchChallengeException e) {
+            challengeView.showNotification(ChallengeContract.Notification.CHALLENGE_NOT_EXISTS);
+        } catch (ActionForbiddenException e) {
+            challengeView.showNotification(ChallengeContract.Notification.CHALLENGER_NOT_PARTICIPATES);
+        }
+    }
 }
