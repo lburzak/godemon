@@ -13,7 +13,6 @@ import lombok.AllArgsConstructor;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,12 +21,13 @@ public class ChallengeService {
     private final MatchDetailsEndpoint matchDetailsEndpoint;
     private final ChallengeRepository challengeRepository;
     private final ContributionRepository contributionRepository;
+    private final RandomNumberGenerator rng;
 
-    public Challenge synchronizeChallenge(int id) {
+    public void synchronizeChallenge(int id) {
         Challenge challenge = challengeRepository.findChallenge(id);
 
         if (challenge == null)
-            return null;
+            return;
 
         List<MatchDetails> fetchedMatches = challenge.getParticipants().stream()
                 .map(Challenger::getInGameId)
@@ -40,19 +40,19 @@ public class ChallengeService {
         Map<Integer, Integer> currentGodPool = challenge.getAvailableGods();
         GodPool godPool = new GodPool(currentGodPool);
         final List<Contribution> contributions = new LinkedList<>();
-        SeparatedPlayers players;
         Stream<Integer> ownGods;
+        PlayerPool playerPool;
 
         for (final var match : fetchedMatches) {
-            players = matchDetailsToSeparatedPlayers(match, challenge);
-            ownGods = players.ownTeam.map(PlayerRecord::getGodId);
+            playerPool = new PlayerPool(match, challenge);
+            ownGods = playerPool.participants().map(PlayerRecord::getGodId);
 
-            players.ownTeam
+            playerPool.participants()
                     .map(playerRecord -> playerRecordToContribution(playerRecord, match.getId()))
                     .forEach(contributions::add);
 
             if (ownGods.allMatch(godPool::contains)) {
-                godPool.applyChanges(separatedPlayersToGodPoolChanges(players));
+                godPool.applyChanges(playerPoolToGodChanges(playerPool));
             }
         }
 
@@ -65,7 +65,6 @@ public class ChallengeService {
 
         challengeRepository.updateChallenge(newChallenge);
         contributionRepository.insertAll(challenge.getId(), contributions);
-        return newChallenge;
     }
 
     private Contribution playerRecordToContribution(PlayerRecord playerRecord, int matchId) {
@@ -79,50 +78,27 @@ public class ChallengeService {
                 .build();
     }
 
-    @AllArgsConstructor
-    private static class SeparatedPlayers {
-        public final Stream<PlayerRecord> anyTeam;
-        public final Stream<PlayerRecord> ownTeam;
+    private Stream<Integer> randomize(Stream<Integer> items) {
+        List<Integer> available = items.collect(Collectors.toList());
+
+        return Stream.generate(() -> available.remove(rng.getInt(0, available.size())));
     }
 
-    private List<Integer> squash(List<Integer> ids, long outputSize) {
-        int size = ids.size();
-
-        while (size > outputSize) {
-            ids.remove(ThreadLocalRandom.current().nextInt(0, size));
-            size--;
-        }
-
-        return ids;
-    }
-
-    private SeparatedPlayers matchDetailsToSeparatedPlayers(MatchDetails matchDetails, Challenge challenge) {
-        Stream<PlayerRecord> players = Arrays.stream(matchDetails.getPlayers());
-        Stream<PlayerRecord> participants = players
-                .filter(player -> challenge.getParticipants().stream()
-                        .anyMatch(challenger -> challenger.getInGameId() == player.getPlayerId())
-                );
-
-        return new SeparatedPlayers(players, participants);
-    }
-
-    private Stream<GodPool.Change> separatedPlayersToGodPoolChanges(SeparatedPlayers separatedPlayers) {
-        Optional<PlayerRecord> anyParticipant = separatedPlayers.ownTeam.findAny();
+    private Stream<GodPool.Change> playerPoolToGodChanges(PlayerPool playerPool) {
+        Optional<PlayerRecord> anyParticipant = playerPool.participants().findAny();
         if (anyParticipant.isPresent()) {
             boolean isWin = anyParticipant.get().getWinStatus() == PlayerRecord.WinStatus.WINNER;
 
             if (isWin) {
-                return squash(
-                            separatedPlayers.anyTeam
-                                .filter(player -> player.getWinStatus() == PlayerRecord.WinStatus.LOSER)
-                                .map(PlayerRecord::getGodId)
-                                .collect(Collectors.toList()),
-                                separatedPlayers.ownTeam.count()
-                            )
-                        .stream()
+                Stream<Integer> opponentGods = playerPool
+                        .opponents(true)
+                        .map(PlayerRecord::getGodId);
+
+                return randomize(opponentGods)
+                        .limit(playerPool.participants().count())
                         .map(godId -> new GodPool.Change(GodPool.ChangeType.GRANT, godId));
             } else {
-                return separatedPlayers.ownTeam
+                return playerPool.participants()
                         .map(PlayerRecord::getGodId)
                         .map(godId -> new GodPool.Change(GodPool.ChangeType.REVOKE, godId));
             }

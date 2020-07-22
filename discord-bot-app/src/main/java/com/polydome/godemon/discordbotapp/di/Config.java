@@ -9,6 +9,7 @@ import com.polydome.godemon.domain.repository.*;
 import com.polydome.godemon.domain.service.ChallengeService;
 import com.polydome.godemon.domain.service.GameRulesProvider;
 import com.polydome.godemon.domain.service.PlayerEndpoint;
+import com.polydome.godemon.domain.service.RandomNumberGenerator;
 import com.polydome.godemon.domain.service.matchdetails.MatchDetailsEndpoint;
 import com.polydome.godemon.domain.usecase.*;
 import com.polydome.godemon.presentation.contract.ChallengeContract;
@@ -38,6 +39,7 @@ import javax.security.auth.login.LoginException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Configuration
 @PropertySource("file:application.properties")
@@ -147,8 +149,13 @@ public class Config {
     }
 
     @Bean
-    public ChallengeService challengeService(MatchDetailsEndpoint matchDetailsEndpoint, ChallengeRepository challengeRepository, ContributionRepository contributionRepository) {
-        return new ChallengeService(matchDetailsEndpoint, challengeRepository, contributionRepository);
+    public ChallengeService challengeService(MatchDetailsEndpoint matchDetailsEndpoint, ChallengeRepository challengeRepository, ContributionRepository contributionRepository, RandomNumberGenerator randomNumberGenerator) {
+        return new ChallengeService(matchDetailsEndpoint, challengeRepository, contributionRepository, randomNumberGenerator);
+    }
+
+    @Bean
+    public RandomNumberGenerator randomNumberGenerator() {
+        return (inclusiveMin, exclusiveMax) -> ThreadLocalRandom.current().nextInt(inclusiveMin, exclusiveMax);
     }
 
     // Smite data
