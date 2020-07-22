@@ -42,6 +42,19 @@ public class ChallengerDAO implements ChallengerRepository {
     }
 
     @Override
+    public boolean existsChallenger(long id) throws CRUDException {
+        try {
+            findByDiscordIdStatement.setLong(1, id);
+
+            ResultSet resultSet = findByDiscordIdStatement.executeQuery();
+
+            return resultSet.next();
+        } catch (SQLException e) {
+            throw new CRUDException(e);
+        }
+    }
+
+    @Override
     public void createChallenger(long discordId, String inGameName, int inGameId) {
         try {
             insertStatement.setLong(1, discordId);

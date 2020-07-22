@@ -23,6 +23,7 @@ public class ChallengeDAO implements ChallengeRepository {
     private final SmiteGameModeService gameModeService;
     private final PreparedStatement selectChampionsByChallengeId;
     private final PreparedStatement selectChallengesByParticipantId;
+    private final PreparedStatement selectAllChallenges;
 
     public ChallengeDAO(Connection dbConnection, SmiteGameModeService gameModeService) throws SQLException {
         insertChampionStatement =
@@ -45,6 +46,8 @@ public class ChallengeDAO implements ChallengeRepository {
                 dbConnection.prepareStatement("SELECT god_id, uses_left FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenge.id = ?");
         selectChallengesByParticipantId =
                 dbConnection.prepareStatement("SELECT challenge.* FROM challenge INNER JOIN participant ON challenge.id = participant.challenge_id WHERE participant.challenger_id = ?");
+        selectAllChallenges =
+                dbConnection.prepareStatement("SELECT * FROM challenge");
         this.gameModeService = gameModeService;
     }
 
@@ -95,6 +98,30 @@ public class ChallengeDAO implements ChallengeRepository {
         } catch (SQLException e) {
             throw new CRUDException("Internal query failure", e);
         }
+    }
+
+    @Override
+    public List<Challenge> findAllChallenges() throws CRUDException {
+        try {
+            ResultSet resultSet = selectAllChallenges.executeQuery();
+            Challenge.ChallengeBuilder builder =  Challenge.builder();
+            int id;
+
+            while (resultSet.next()) {
+                id = resultSet.getInt("id");
+
+                builder.id(id)
+                        .lastUpdate(resultSet.getTimestamp("last_update").toInstant())
+                        .gameMode(gameModeService.getGameModeFromId(resultSet.getInt("gamemode_id")));
+
+                builder.availableGods(findAvailableGods(id));
+                builder.participants(findParticipants(id));
+            }
+        } catch (SQLException e) {
+            throw new CRUDException(e);
+        }
+
+        return List.of();
     }
 
     private Map<Integer, Integer> findAvailableGods(int challengeId) throws SQLException {

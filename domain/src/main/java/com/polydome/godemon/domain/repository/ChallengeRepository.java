@@ -10,4 +10,5 @@ public interface ChallengeRepository {
     List<Challenge> findChallengesByParticipant(long participantId) throws CRUDException;
     void updateChallenge(Challenge challenge) throws CRUDException;
     void createChallenge(Challenge challenge) throws CRUDException;
+    List<Challenge> findAllChallenges() throws CRUDException;
 }

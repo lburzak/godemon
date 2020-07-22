@@ -16,15 +16,7 @@ public class GetAvailableChallengesUseCase {
         List<Challenge> challenges = challengeRepository.findChallengesByParticipant(id);
 
         return challenges.stream()
-                .map(this::challengeToBrief)
+                .map(ChallengeBrief::fromChallenge)
                 .collect(Collectors.toList());
-    }
-
-    private ChallengeBrief challengeToBrief(Challenge challenge) {
-        return ChallengeBrief.builder()
-                .id(challenge.getId())
-                .gameMode(challenge.getGameMode())
-                .lastUpdate(challenge.getLastUpdate())
-                .build();
     }
 }
