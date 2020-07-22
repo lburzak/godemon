@@ -43,10 +43,15 @@ public class SmiteMatchDetailsEndpoint implements MatchDetailsEndpoint {
     }
 
     private Queue modeToQueue(GameMode mode) {
-        return switch(mode) {
-            case RANKED_DUEL -> Queue.RANKED_DUEL;
-            default -> throw new UnsupportedOperationException("Unable to convert mode " + mode.name() + " to queue");
-        };
+        Queue queue;
+
+        switch(mode) {
+            case RANKED_DUEL: queue = Queue.RANKED_DUEL; break;
+            case JOUST: queue = Queue.JOUST; break;
+            default: throw new UnsupportedOperationException("Unable to convert mode " + mode.name() + " to queue");
+        }
+
+        return queue;
     }
 
     @Override

@@ -24,7 +24,7 @@ public class DiscordCommandHandler {
         long authorId = event.getAuthor().getIdLong();
 
         switch (commandLine.command) {
-            case "challenge" -> {
+            case "challenge": {
                 if (commandLine.argsCount == 1) {
                     challengePresenter.onShowChallengeStatus(
                             createInputChallengeView(event),
@@ -38,16 +38,16 @@ public class DiscordCommandHandler {
                     );
                 }
             }
-            case "me" -> challengePresenter.onRegister(
+            case "me": challengePresenter.onRegister(
                     createInputChallengeView(event),
                     authorId,
                     commandLine.args[0]
             );
-            case "challenge-create" -> challengePresenter.onCreateChallenge(
+            case "challenge-create": challengePresenter.onCreateChallenge(
                     createInputChallengeView(event),
                     authorId
             );
-            case "join" -> challengePresenter.onJoinChallenge(
+            case "join":  challengePresenter.onJoinChallenge(
                     createInputChallengeView(event),
                     Integer.parseInt(commandLine.args[0]),
                     authorId

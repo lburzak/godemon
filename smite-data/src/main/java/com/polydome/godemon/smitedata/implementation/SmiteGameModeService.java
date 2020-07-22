@@ -5,17 +5,26 @@ import com.polydome.godemon.smiteapi.model.Queue;
 
 public class SmiteGameModeService {
     public int getGameModeId(GameMode gameMode) {
-        return switch (gameMode) {
-            case RANKED_DUEL -> Queue.RANKED_DUEL.getId();
-            case JOUST -> Queue.JOUST.getId();
-        };
+        int id;
+
+        switch (gameMode) {
+            case RANKED_DUEL: id = Queue.RANKED_DUEL.getId(); break;
+            case JOUST: id = Queue.JOUST.getId(); break;
+            default: id = -1;
+        }
+
+        return id;
     }
 
     public GameMode getGameModeFromId(int id) {
-        return switch (Queue.fromId(id)) {
-            case RANKED_DUEL -> GameMode.RANKED_DUEL;
-            case JOUST -> GameMode.JOUST;
-            case UNKNOWN -> throw new UnsupportedOperationException("Unknown queue id " + id);
-        };
+        GameMode gameMode;
+
+        switch (Queue.fromId(id)) {
+            case RANKED_DUEL: gameMode = GameMode.RANKED_DUEL; break;
+            case JOUST: gameMode = GameMode.JOUST; break;
+            default: throw new UnsupportedOperationException("Unknown queue id " + id);
+        }
+
+        return gameMode;
     }
 }

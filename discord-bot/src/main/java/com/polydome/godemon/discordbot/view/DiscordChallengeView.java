@@ -48,16 +48,34 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
     @Override
     public void showNotification(ChallengeContract.Notification notification) {
-        String messageContent =
-            switch (notification) {
-                case CHALLENGER_NOT_REGISTERED -> String.format("%s, please register with `;godemon me <SMITE_USERNAME>`", mention);
-                case CHALLENGER_ALREADY_PARTICIPATES -> String.format("%s, you participate in this challenge already.", mention);
-                case CHALLENGE_NOT_EXISTS -> String.format("%s, such challenge doesn't exist!", mention);
-                case CHALLENGE_CREATED -> String.format("%s, challenge created.", mention);
-                case CHALLENGER_NOT_PARTICIPATES -> String.format("%s, you do not participate in that challenge.", mention);
-                case REGISTRATION_INVALID_HIREZNAME -> String.format("%s, there is no such SMITE player.", mention);
-                case REGISTRATION_ALREADY_REGISTERED -> String.format("%s, you are already registered", mention);
-            };
+        String messageContent = "";
+
+        switch (notification) {
+            case CHALLENGER_NOT_REGISTERED:
+                messageContent = String.format("%s, please register with `;godemon me <SMITE_USERNAME>`", mention);
+                break;
+            case CHALLENGER_ALREADY_PARTICIPATES:
+                messageContent = String.format("%s, you participate in this challenge already.", mention);
+                break;
+            case CHALLENGE_NOT_EXISTS:
+                messageContent = String.format("%s, such challenge doesn't exist!", mention);
+                break;
+            case CHALLENGE_CREATED:
+                messageContent = String.format("%s, challenge created.", mention);
+                break;
+            case CHALLENGER_NOT_PARTICIPATES:
+                messageContent = String.format("%s, you do not participate in that challenge.", mention);
+                break;
+            case REGISTRATION_INVALID_HIREZNAME:
+                messageContent = String.format("%s, there is no such SMITE player.", mention);
+                break;
+            case REGISTRATION_ALREADY_REGISTERED:
+                messageContent = String.format("%s, you are already registered", mention);
+                break;
+            default:
+                return;
+        };
+
 
         channel.sendMessage(messageContent).queue();
     }

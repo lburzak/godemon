@@ -15,10 +15,14 @@ public enum Queue {
     }
 
     public static Queue fromId(int id) {
-        return switch (id) {
-            case 440 -> RANKED_DUEL;
-            case 448 -> JOUST;
-            default -> UNKNOWN;
-        };
+        Queue queue;
+
+        switch (id) {
+            case 440: queue = RANKED_DUEL; break;
+            case 448: queue = JOUST; break;
+            default: queue = UNKNOWN; break;
+        }
+
+        return queue;
     }
 }

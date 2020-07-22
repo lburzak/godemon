@@ -78,8 +78,8 @@ public class ChallengeController implements ChallengeContract.Presenter {
             view.showRegistrationSuccess(result.getNewName());
         } else {
             switch (result.getError()) {
-                case CHALLENGER_ALREADY_REGISTERED -> view.showNotification(ChallengeContract.Notification.REGISTRATION_ALREADY_REGISTERED);
-                case PLAYER_NOT_EXISTS -> view.showNotification(ChallengeContract.Notification.REGISTRATION_INVALID_HIREZNAME);
+                case CHALLENGER_ALREADY_REGISTERED: view.showNotification(ChallengeContract.Notification.REGISTRATION_ALREADY_REGISTERED);
+                case PLAYER_NOT_EXISTS: view.showNotification(ChallengeContract.Notification.REGISTRATION_INVALID_HIREZNAME);
             };
         }
     }

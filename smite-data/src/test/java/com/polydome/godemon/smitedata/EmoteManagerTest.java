@@ -51,12 +51,14 @@ class EmoteManagerTest {
         @Override
         public Maybe<God> findByName(String name) {
             return Maybe.create(emitter -> {
-                God god = switch (name) {
-                    case "horus" -> new God(1, "horus", "Horus");
-                    case "tyr" -> new God(2, "tyr", "Tyr");
-                    case "flavia" -> new God(3, "flavia", "Flavia");
-                    default -> null;
-                };
+                God god;
+
+                switch (name) {
+                    case "horus": god = new God(1, "horus", "Horus"); break;
+                    case "tyr": god = new God(2, "tyr", "Tyr"); break;
+                    case "flavia": god = new God(3, "flavia", "Flavia"); break;
+                    default: god = null; break;
+                }
 
                 if (god == null)
                     emitter.onComplete();
