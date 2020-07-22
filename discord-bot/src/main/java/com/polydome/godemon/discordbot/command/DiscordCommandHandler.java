@@ -26,11 +26,25 @@ public class DiscordCommandHandler {
         switch (commandLine.command) {
             case "challenge": {
                 if (commandLine.argsCount == 1) {
-                    challengePresenter.onShowChallengeStatus(
-                            createInputChallengeView(event),
-                            Integer.parseInt(commandLine.args[0]),
-                            authorId
-                    );
+                    if (commandLine.args[0].equals("new")) {
+                        challengePresenter.onCreateChallenge(
+                                createInputChallengeView(event),
+                                event.getAuthor().getIdLong()
+                        );
+                    } else {
+                        int challengeId = 1;
+                        try {
+                            challengeId = Integer.parseInt(commandLine.args[0]);
+                        } catch (NumberFormatException e) {
+                            event.getChannel().sendMessage("Invalid argument").queue();
+                        }
+
+                        challengePresenter.onShowChallengeStatus(
+                                createInputChallengeView(event),
+                                challengeId,
+                                authorId
+                        );
+                    }
                 } else {
                     challengePresenter.onShowChallengesList(
                             createInputChallengeView(event),
@@ -45,12 +59,6 @@ public class DiscordCommandHandler {
                         createInputChallengeView(event),
                         authorId,
                         commandLine.args[0]
-                );
-                break;
-            case "challenge-create":
-                challengePresenter.onCreateChallenge(
-                    createInputChallengeView(event),
-                    authorId
                 );
                 break;
             case "join":
