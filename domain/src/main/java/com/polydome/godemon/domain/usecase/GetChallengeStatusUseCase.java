@@ -34,15 +34,6 @@ public class GetChallengeStatusUseCase {
 
         Challenge challenge;
 
-        try {
-            challenge = challengeRepository.findChallenge(challengeId);
-        } catch (NoSuchEntityException e) {
-            throw new NoSuchChallengeException(challengeId);
-        }
-
-        if (challenge.getParticipants().stream().noneMatch(challenger -> challenger.getId() == challengerId))
-            throw new ActionForbiddenException(String.format("Challenger[%d] does not participate in Challenge[%d]", challengerId, challengeId));
-
         if (doUpdate)
             challengeService.synchronizeChallenge(challengeId);
 
