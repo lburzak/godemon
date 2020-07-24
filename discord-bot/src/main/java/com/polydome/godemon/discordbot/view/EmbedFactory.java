@@ -31,10 +31,10 @@ public class EmbedFactory {
         return String.format("`%dx` <%s> **%3$20s**", usesLeft, godData.getEmoteId(), godData.getName());
     }
 
-    public MessageEmbed challengeStatus(ChallengeStatus status, boolean updatingFlag) {
+    public MessageEmbed challengeStatus(int challengeId, ChallengeStatus status, boolean updatingFlag) {
         EmbedBuilder builder = new EmbedBuilder();
 
-        builder.setTitle("Challenge");
+        builder.setTitle("Challenge no. " + challengeId);
 
         StringBuilder participants = new StringBuilder();
         for (final var participant : status.getParticipants()) {
