@@ -2,6 +2,7 @@ package com.polydome.godemon.discordbotapp;
 
 import com.polydome.godemon.discordbot.emote.XmlEmoteStore;
 import com.polydome.godemon.discordbot.listener.CommandListener;
+import com.polydome.godemon.discordbot.reaction.ActionListener;
 import com.polydome.godemon.discordbot.reaction.ReactionActionBus;
 import io.reactivex.Completable;
 import net.dv8tion.jda.api.JDA;
@@ -44,6 +45,7 @@ public class GodemonBot {
             } catch (IOException e) {
                 logger.warn("Opening emote definitions file {} failed!", emotesFileUrl);
             }
+
             jda.addEventListener(commandListener, reactionActionBus);
         });
     }
