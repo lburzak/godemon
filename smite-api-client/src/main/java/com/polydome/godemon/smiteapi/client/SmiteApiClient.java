@@ -8,7 +8,6 @@ import com.squareup.moshi.Types;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
@@ -31,22 +30,36 @@ public class SmiteApiClient {
     private final Moshi moshi;
     private final Logger logger;
     private final DateTimeFormatter timestampFormatter;
-    private String sessionId;
+    private final SessionStorage sessionStorage;
 
+    private static final int SESSION_ALIVE_MINUTES = 15;
     private final String DEFAULT_FORMAT = "json";
     private final LanguageCode DEFAULT_LANG = LanguageCode.ENGLISH;
 
-    private SmiteApiClient(String endpointUrl, String devId, String authKey, OkHttpClient httpClient, Moshi moshi) {
+    private SmiteApiClient(String endpointUrl, String devId, String authKey, OkHttpClient httpClient, Moshi moshi, SessionStorage sessionStorage) {
         this.endpointUrl = endpointUrl;
         this.devId = devId;
         this.authKey = authKey;
         this.httpClient = httpClient;
         this.moshi = moshi;
+        this.sessionStorage = sessionStorage;
 
         logger = LoggerFactory.getLogger(SmiteApiClient.class);
         timestampFormatter = DateTimeFormatter
                 .ofPattern("uuuuMMddHHmmss")
                 .withZone( ZoneId.of("UTC"));
+    }
+
+    private Single<String> getSessionId() {
+        return Single.create(emitter -> {
+            if (sessionStorage.existsSession()) {
+                emitter.onSuccess(sessionStorage.getSessionId());
+            } else {
+                createSession().subscribe(() -> {
+                    emitter.onSuccess(sessionStorage.getSessionId());
+                });
+            }
+        });
     }
 
     private String parseApiMethod(String method) {
@@ -119,81 +132,89 @@ public class SmiteApiClient {
 
             Request request = createSimpleRequest(urlBuilder.build());
             performJsonApiCall(request, moshi.adapter(CreateSessionResponse.class))
-                .subscribe(response -> {
-                    this.sessionId = response.sessionId;
-                    logger.info("Session created: {}", sessionId);
-                    emitter.onComplete();
-                });
+                    .subscribe(response -> {
+                        sessionStorage.setSessionId(response.sessionId, SESSION_ALIVE_MINUTES);
+                        logger.info("Session created");
+                        emitter.onComplete();
+                    });
         });
     }
 
     public Maybe<Player> getPlayer(String name) {
         String method = "getplayer";
 
-        return Maybe.create(emitter -> {
-            HttpUrl.Builder urlBuilder = createBaseUrlBuilder(method)
-                    .addPathSegment(sessionId)
-                    .addPathSegment(createTimestamp())
-                    .addPathSegment(name);
+        return getSessionId().flatMapMaybe(sessionId ->
+                Maybe.create(emitter -> {
+                    HttpUrl.Builder urlBuilder = createBaseUrlBuilder(method)
+                            .addPathSegment(sessionId)
+                            .addPathSegment(createTimestamp())
+                            .addPathSegment(name);
 
-            Request request = createSimpleRequest(urlBuilder.build());
+                    Request request = createSimpleRequest(urlBuilder.build());
 
-            JsonAdapter<List<Player>> adapter = moshi.adapter(Types.newParameterizedType(List.class, Player.class));
-            performJsonApiCall(request, adapter)
-                    .subscribe(response -> {
-                        if (response.size() == 0)
-                            emitter.onComplete();
-                        else
-                            emitter.onSuccess(response.get(0));
-                    });
-        });
+                    JsonAdapter<List<Player>> adapter = moshi.adapter(Types.newParameterizedType(List.class, Player.class));
+                    performJsonApiCall(request, adapter)
+                            .subscribe(response -> {
+                                if (response.size() == 0)
+                                    emitter.onComplete();
+                                else
+                                    emitter.onSuccess(response.get(0));
+                            });
+                })
+        );
     }
 
     public Maybe<List<MatchParticipantStats>> getMatchDetails(int matchId) {
-        return Maybe.create(emitter -> {
-            HttpUrl.Builder urlBuilder = createBaseUrlBuilder("getmatchdetails")
-                    .addPathSegment(sessionId)
-                    .addPathSegment(createTimestamp())
-                    .addPathSegment(String.valueOf(matchId));
+        return getSessionId().flatMapMaybe(sessionId ->
+                    Maybe.create(emitter -> {
+                HttpUrl.Builder urlBuilder = createBaseUrlBuilder("getmatchdetails")
+                        .addPathSegment(sessionId)
+                        .addPathSegment(createTimestamp())
+                        .addPathSegment(String.valueOf(matchId));
 
-            Request request = createSimpleRequest(urlBuilder.build());
+                Request request = createSimpleRequest(urlBuilder.build());
 
-            JsonAdapter<List<MatchParticipantStats>> adapter = moshi.adapter(Types.newParameterizedType(List.class, MatchParticipantStats.class));
-            performJsonApiCall(request, adapter)
-                    .subscribe(emitter::onSuccess);
-        });
+                JsonAdapter<List<MatchParticipantStats>> adapter = moshi.adapter(Types.newParameterizedType(List.class, MatchParticipantStats.class));
+                performJsonApiCall(request, adapter)
+                        .subscribe(emitter::onSuccess);
+            })
+        );
     }
 
     public Maybe<List<RecentMatch>> getMatchHistory(int playerId) {
-        return Maybe.create(emitter -> {
-            HttpUrl.Builder urlBuilder = createBaseUrlBuilder("getmatchhistory")
-                    .addPathSegment(sessionId)
-                    .addPathSegment(createTimestamp())
-                    .addPathSegment(String.valueOf(playerId));
+        return getSessionId().flatMapMaybe(sessionId ->
+            Maybe.create(emitter -> {
+                HttpUrl.Builder urlBuilder = createBaseUrlBuilder("getmatchhistory")
+                        .addPathSegment(sessionId)
+                        .addPathSegment(createTimestamp())
+                        .addPathSegment(String.valueOf(playerId));
 
-            Request request = createSimpleRequest(urlBuilder.build());
+                Request request = createSimpleRequest(urlBuilder.build());
 
-            JsonAdapter<List<RecentMatch>> adapter = moshi.adapter(Types.newParameterizedType(List.class, RecentMatch.class));
-            performJsonApiCall(request, adapter)
-                    .subscribe(emitter::onSuccess);
-        });
+                JsonAdapter<List<RecentMatch>> adapter = moshi.adapter(Types.newParameterizedType(List.class, RecentMatch.class));
+                performJsonApiCall(request, adapter)
+                        .subscribe(emitter::onSuccess);
+            })
+        );
     }
 
     public Maybe<List<GodDefinition>> getGods() {
         String method = "getgods";
 
-        return Maybe.create(emitter -> {
-            HttpUrl.Builder urlBuilder = createBaseUrlBuilder(method)
-                    .addPathSegment(sessionId)
-                    .addPathSegment(createTimestamp())
-                    .addPathSegment(String.valueOf(DEFAULT_LANG.id));
+        return getSessionId().flatMapMaybe(sessionId ->
+            Maybe.create(emitter -> {
+                HttpUrl.Builder urlBuilder = createBaseUrlBuilder(method)
+                        .addPathSegment(sessionId)
+                        .addPathSegment(createTimestamp())
+                        .addPathSegment(String.valueOf(DEFAULT_LANG.id));
 
-            Request request = createSimpleRequest(urlBuilder.build());
+                Request request = createSimpleRequest(urlBuilder.build());
 
-            JsonAdapter<List<GodDefinition>> adapter = moshi.adapter(Types.newParameterizedType(List.class, GodDefinition.class));
-            performJsonApiCall(request, adapter)
-                    .subscribe(emitter::onSuccess);
-        });
+                JsonAdapter<List<GodDefinition>> adapter = moshi.adapter(Types.newParameterizedType(List.class, GodDefinition.class));
+                performJsonApiCall(request, adapter)
+                        .subscribe(emitter::onSuccess);
+            })
+        );
     }
 
     public static Builder builder() {
@@ -206,6 +227,7 @@ public class SmiteApiClient {
         private String authKey;
         private OkHttpClient httpClient;
         private Moshi moshi;
+        private SessionStorage sessionStorage;
 
         public Builder endpointUrl(String endpointUrl) {
             this.endpointUrl = endpointUrl;
@@ -232,6 +254,11 @@ public class SmiteApiClient {
             return this;
         }
 
+        public Builder sessionStorage(SessionStorage sessionStorage) {
+            this.sessionStorage = sessionStorage;
+            return this;
+        }
+
         private String getMissingComponentName() {
             if (endpointUrl == null)
                 return "endpointUrl";
@@ -243,6 +270,8 @@ public class SmiteApiClient {
                 return "httpClient";
             if (moshi == null)
                 return "moshi";
+            if (sessionStorage == null)
+                return "ssesionStorage";
             return null;
         }
 
@@ -250,7 +279,7 @@ public class SmiteApiClient {
             String missingComponent = getMissingComponentName();
             if (missingComponent != null)
                 throw new IllegalStateException(String.format("Unable to construct without `%s`", missingComponent));
-            return new SmiteApiClient(endpointUrl, devId, authKey, httpClient, moshi);
+            return new SmiteApiClient(endpointUrl, devId, authKey, httpClient, moshi, sessionStorage);
         }
     }
 }

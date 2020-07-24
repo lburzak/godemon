@@ -1,6 +1,7 @@
 package com.polydome.godemon.discordbotapp.di;
 
 import com.polydome.godemon.data.dao.*;
+import com.polydome.godemon.data.redis.RedisStorage;
 import com.polydome.godemon.discordbot.listener.CommandListener;
 import com.polydome.godemon.discordbot.listener.MessageActionListener;
 import com.polydome.godemon.discordbot.reaction.ReactionActionBus;
@@ -14,6 +15,7 @@ import com.polydome.godemon.domain.service.matchdetails.MatchDetailsEndpoint;
 import com.polydome.godemon.domain.usecase.*;
 import com.polydome.godemon.presentation.contract.ChallengeContract;
 import com.polydome.godemon.presentation.controller.ChallengeController;
+import com.polydome.godemon.smiteapi.client.SessionStorage;
 import com.polydome.godemon.smiteapi.client.SmiteApiClient;
 import com.polydome.godemon.smiteapi.json.InstantAdapter;
 import com.polydome.godemon.smiteapi.json.QueueAdapter;
@@ -34,6 +36,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import redis.clients.jedis.Jedis;
 
 import javax.inject.Singleton;
 import javax.security.auth.login.LoginException;
@@ -251,15 +254,29 @@ public class Config {
             final @Value("${hirez.devId}") String devId,
             final @Value("${hirez.authKey}") String authKey,
             final OkHttpClient httpClient,
-            final Moshi moshi
-    ) {
+            final Moshi moshi,
+            final SessionStorage sessionStorage
+            ) {
         return SmiteApiClient.builder()
                 .endpointUrl("http://api.smitegame.com/smiteapi.svc")
                 .devId(devId)
                 .authKey(authKey)
                 .httpClient(httpClient)
                 .moshi(moshi)
+                .sessionStorage(sessionStorage)
                 .build();
+    }
+
+    @Bean
+    @Singleton
+    public SessionStorage sessionStorage(Jedis jedis) {
+        return new RedisStorage(jedis);
+    }
+
+    @Bean
+    @Singleton
+    public Jedis jedis() {
+        return new Jedis();
     }
 
     @Bean

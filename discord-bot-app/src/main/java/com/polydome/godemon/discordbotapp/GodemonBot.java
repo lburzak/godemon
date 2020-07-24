@@ -19,7 +19,7 @@ public class GodemonBot {
     }
 
     public Completable init() {
-        return smiteApiClient.initialize();
+        return Completable.complete();
     }
 
     public Completable shutdown() {

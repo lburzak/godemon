@@ -18,7 +18,9 @@ repositories {
 dependencies {
     implementation project(':smite-data')
     implementation project(':domain')
+    implementation project(':smite-api-client')
 
     implementation 'mysql:mysql-connector-java:8.0.20'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
+    implementation 'redis.clients:jedis:3.3.0'
 }
