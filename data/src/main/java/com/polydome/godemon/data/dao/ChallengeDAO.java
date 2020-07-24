@@ -29,7 +29,7 @@ public class ChallengeDAO implements ChallengeRepository {
         insertChampionStatement =
                 dbConnection.prepareStatement("INSERT INTO champion (challenge_id, god_id, uses_left) VALUES (?, ?, ?)");
         insertChallengeStatement =
-                dbConnection.prepareStatement("INSERT INTO challenge (last_update, gamemode_id) VALUES (?, ?)");
+                dbConnection.prepareStatement("INSERT INTO challenge (last_update, gamemode_id) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
         updateChallengeLastUpdateStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET last_update = ? WHERE id = ?");
         selectParticipantsByChallengeId =
@@ -52,11 +52,18 @@ public class ChallengeDAO implements ChallengeRepository {
     }
 
     @Override
-    public void createChallenge(Challenge challenge) throws CRUDException {
+    public Challenge createChallenge(Challenge challenge) throws CRUDException {
         try {
+            final var createdChallenge = challenge.toBuilder();
+
             insertChallengeStatement.setTimestamp(1, Timestamp.from(challenge.getLastUpdate()));
             insertChallengeStatement.setInt(2, gameModeService.getGameModeId(challenge.getGameMode()));
             insertChallengeStatement.execute();
+
+            try (ResultSet generatedKeys = insertChallengeStatement.getGeneratedKeys()) {
+                if (generatedKeys.next())
+                    createdChallenge.id(generatedKeys.getInt(1));
+            }
 
             for (var entry : challenge.getAvailableGods().entrySet()) {
                 insertChampionStatement.setInt(1, challenge.getId());
@@ -69,6 +76,8 @@ public class ChallengeDAO implements ChallengeRepository {
                 insertParticipant.setInt(1, challenge.getId());
                 insertParticipant.setLong(2, challenger.getId());
             }
+
+            return createdChallenge.build();
         } catch (SQLException e) {
             throw new CRUDException("Internal query failure", e);
         }

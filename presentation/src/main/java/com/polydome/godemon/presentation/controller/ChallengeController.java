@@ -62,14 +62,19 @@ public class ChallengeController implements ChallengeContract.Presenter {
 
     @Override
     public void onModeChoice(ChallengeContract.View challengeView, long challengerId, GameMode mode) {
+        int challengeId;
+
         try {
-            startChallengeUseCase.execute(challengerId, mode);
+            challengeId = startChallengeUseCase.execute(challengerId, mode);
         } catch (AuthenticationException e) {
             challengeView.showNotification(ChallengeContract.Notification.CHALLENGER_NOT_REGISTERED);
             return;
         }
 
+        ChallengeStatus status = getChallengeStatusUseCase.execute(challengerId, challengeId, false);
+
         challengeView.showNotification(ChallengeContract.Notification.CHALLENGE_CREATED);
+        challengeView.showInitialChallengeStatus(status, challengeId, false);
     }
 
     @Override
@@ -90,9 +95,9 @@ public class ChallengeController implements ChallengeContract.Presenter {
     public void onShowChallengeStatus(ChallengeContract.View challengeView, int challengeId, long challengerId) {
         try {
             ChallengeStatus status = getChallengeStatusUseCase.execute(challengerId, challengeId, false);
-            challengeView.showIntermediateChallengeStatus(status, challengeId);
+            challengeView.showInitialChallengeStatus(status, challengeId, true);
             status = getChallengeStatusUseCase.execute(challengerId, challengeId, true);
-            challengeView.showFinalChallengeStatus(status, challengeId);
+            challengeView.showUpdatedChallengeStatus(status, challengeId);
         } catch (AuthenticationException e) {
             challengeView.showNotification(ChallengeContract.Notification.CHALLENGER_NOT_REGISTERED);
         } catch (NoSuchChallengeException e) {
@@ -127,7 +132,7 @@ public class ChallengeController implements ChallengeContract.Presenter {
 
         try {
             ChallengeStatus status = getChallengeStatusUseCase.execute(challengerId, challengeId, true);
-            challengeView.showFinalChallengeStatus(status, challengeId);
+            challengeView.showUpdatedChallengeStatus(status, challengeId);
         } catch (AuthenticationException e) {
             challengeView.showNotification(ChallengeContract.Notification.CHALLENGER_NOT_REGISTERED);
         } catch (NoSuchChallengeException e) {

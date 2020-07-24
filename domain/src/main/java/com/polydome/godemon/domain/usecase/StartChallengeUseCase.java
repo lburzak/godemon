@@ -18,14 +18,14 @@ public class StartChallengeUseCase {
     private final ChallengerRepository challengerRepository;
     private final ChallengeRepository challengeRepository;
 
-    public boolean execute(long discordId, GameMode gameMode) {
+    public int execute(long discordId, GameMode gameMode) {
         try {
             challengerRepository.findChallengerById(discordId);
         } catch (NoSuchEntityException e) {
             throw new AuthenticationException("Challenger not registered");
         }
 
-        challengeRepository.createChallenge(
+        Challenge createdChallenge = challengeRepository.createChallenge(
             Challenge.builder()
                 .availableGods(Collections.emptyMap())
                 .gameMode(gameMode)
@@ -35,6 +35,6 @@ public class StartChallengeUseCase {
                 .build()
         );
 
-        return true;
+        return createdChallenge.getId();
     }
 }
