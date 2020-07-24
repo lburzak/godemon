@@ -1,5 +1,7 @@
 package com.polydome.godemon.discordbotapp;
 
+import com.polydome.godemon.discordbot.listener.CommandListener;
+import com.polydome.godemon.discordbot.reaction.ReactionActionBus;
 import com.polydome.godemon.smiteapi.client.SmiteApiClient;
 import io.reactivex.Completable;
 import net.dv8tion.jda.api.JDA;
@@ -10,16 +12,18 @@ import javax.inject.Inject;
 @Service
 public class GodemonBot {
     private final JDA jda;
-    private final SmiteApiClient smiteApiClient;
+    private final CommandListener commandListener;
+    private final ReactionActionBus reactionActionBus;
 
     @Inject
-    public GodemonBot(JDA jda, SmiteApiClient smiteApiClient) {
+    public GodemonBot(JDA jda, CommandListener commandListener, ReactionActionBus reactionActionBus) {
         this.jda = jda;
-        this.smiteApiClient = smiteApiClient;
+        this.commandListener = commandListener;
+        this.reactionActionBus = reactionActionBus;
     }
 
     public Completable init() {
-        return Completable.complete();
+        return Completable.fromRunnable(() -> jda.addEventListener(commandListener, reactionActionBus));
     }
 
     public Completable shutdown() {

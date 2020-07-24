@@ -61,16 +61,11 @@ public class Config {
     @Bean
     @Singleton
     public JDA jda(
-            final @Value("${discord.botToken}") String botToken,
-            final CommandListener commandListener,
-            final ReactionActionBus reactionActionBus,
-            final MessageActionListener messageActionListener
+            final @Value("${discord.botToken}") String botToken
     ) throws LoginException {
-        reactionActionBus.setListener(messageActionListener);
         return JDABuilder
                 .createLight(botToken, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_EMOJIS)
                 .enableCache(CacheFlag.EMOTE)
-                .addEventListeners(commandListener, reactionActionBus)
                 .build();
     }
 
