@@ -37,7 +37,11 @@ public class GetChallengeStatusUseCase {
         if (doUpdate)
             challengeService.synchronizeChallenge(challengeId);
 
-        challenge = challengeRepository.findChallenge(challengeId);
+        try {
+            challenge = challengeRepository.findChallenge(challengeId);
+        } catch (NoSuchEntityException e) {
+            throw new NoSuchChallengeException(challengeId);
+        }
 
         List<Contribution> contributions = contributionRepository.findContributionsByChallenge(challengeId);
 
