@@ -167,7 +167,7 @@ public class DiscordChallengeView implements ChallengeContract.View {
         for (final var field : embed.getFields())
             builder.addField(field);
 
-        builder.setFooter("Updating...");
+        builder.setFooter("Updating...", "https://cdn.discordapp.com/emojis/735567114638852178");
 
         outMessage.editMessage(builder.build()).queue();
     }

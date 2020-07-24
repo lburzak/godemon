@@ -72,7 +72,7 @@ public class EmbedFactory {
         builder.addField("","<:sync:735567114638852178> Sync", true);
 
         if (updatingFlag)
-            builder.setFooter("Updating...");
+            builder.setFooter("Updating...", "https://cdn.discordapp.com/emojis/735567114638852178");
 
         return builder.build();
     }
