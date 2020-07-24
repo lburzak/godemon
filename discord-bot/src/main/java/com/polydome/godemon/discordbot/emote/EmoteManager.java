@@ -11,11 +11,11 @@ import java.util.Map;
 public class EmoteManager {
     private final String DIGIT_EMOTE_SUFFIX = "️⃣";
     private final JDA jda;
-    private final Map<String, Integer> emotesIds;
+    private final EmoteStore emoteStore;
 
-    public EmoteManager(JDA jda, Map<String, Integer> emotesIds) {
+    public EmoteManager(JDA jda, EmoteStore emoteStore) {
         this.jda = jda;
-        this.emotesIds = emotesIds;
+        this.emoteStore = emoteStore;
     }
 
     public String fromDigit(final byte digit) {
@@ -40,8 +40,8 @@ public class EmoteManager {
     }
 
     public Emote findByName(String name) {
-        if (emotesIds.containsKey(name)) {
-            Emote emote = jda.getEmoteById(emotesIds.get(name));
+        if (emoteStore.has(name)) {
+            Emote emote = jda.getEmoteById(emoteStore.findId(name));
             if (emote == null)
                 throw new MissingEmoteException("Emote not present in cache", name);
             return emote;

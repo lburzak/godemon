@@ -36,11 +36,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.xml.sax.SAXException;
 import redis.clients.jedis.Jedis;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.security.auth.login.LoginException;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -88,6 +92,17 @@ public class Config {
     ) {
         return new ChallengeController(joinChallengeUseCase, acceptChallengeUseCase, getChallengeStatusUseCase, introduceUseCase,
                 startChallengeUseCase, getAvailableChallengesUseCase, getAllChallengesUseCase);
+    }
+
+    @Bean
+    public SAXParser saxParser(SAXParserFactory factory) throws ParserConfigurationException, SAXException {
+        return factory.newSAXParser();
+    }
+
+    @Bean
+    @Singleton
+    public SAXParserFactory saxParserFactory() {
+        return SAXParserFactory.newInstance();
     }
 
     // Domain
