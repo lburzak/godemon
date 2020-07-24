@@ -38,6 +38,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import redis.clients.jedis.Jedis;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.security.auth.login.LoginException;
 import java.sql.Connection;
@@ -74,6 +75,11 @@ public class Config {
     }
 
     // Presentation
+
+    @Bean
+    public @Named("CommandPrefix") String commandPrefix(final @Value("${discord.prefix}") String prefix) {
+        return prefix;
+    }
 
     @Bean
     public ChallengeContract.Presenter challengeContractPresenter(

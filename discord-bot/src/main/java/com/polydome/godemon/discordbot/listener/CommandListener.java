@@ -8,15 +8,20 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 @Service
 public class CommandListener extends ListenerAdapter {
     private final CommandLineParser parser;
     private final DiscordCommandHandler commandHandler;
+    private final @Named("CommandPrefix") String prefix;
 
-    public CommandListener(CommandLineParser parser, DiscordCommandHandler commandHandler) {
+    @Inject
+    public CommandListener(CommandLineParser parser, DiscordCommandHandler commandHandler, @Named("CommandPrefix") String prefix) {
         this.parser = parser;
         this.commandHandler = commandHandler;
+        this.prefix = prefix;
     }
 
     @Override
@@ -24,7 +29,7 @@ public class CommandListener extends ListenerAdapter {
         if (event.getAuthor().isBot())
             return;
 
-        CommandLine cmd = parser.parseInput(event.getMessage().getContentRaw(), ";godemon");
+        CommandLine cmd = parser.parseInput(event.getMessage().getContentRaw(), prefix);
 
         if (cmd != null) {
             commandHandler.onCommand(cmd, event);
