@@ -3,6 +3,7 @@ package com.polydome.godemon.presentation.contract;
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeStatus;
+import io.reactivex.Completable;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +23,7 @@ public interface ChallengeContract {
         void showProposition(int challengeId, int[] godsIds);
         void showNotification(Notification notification);
         void showStartingGod(int godId);
-        void showInitialChallengeStatus(ChallengeStatus challengeStatus, int challengeId, boolean isUpdating);
+        Completable showInitialChallengeStatus(ChallengeStatus challengeStatus, int challengeId, boolean isUpdating);
         void showUpdatedChallengeStatus(ChallengeStatus challengeStatus, int challengeId);
         void showRegistrationSuccess(String registeredName);
         void showChallengesList(List<ChallengeBrief> challenges);

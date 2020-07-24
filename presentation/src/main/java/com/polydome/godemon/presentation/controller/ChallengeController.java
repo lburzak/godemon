@@ -1,5 +1,6 @@
 package com.polydome.godemon.presentation.controller;
 
+import com.polydome.godemon.domain.entity.Challenge;
 import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.exception.ActionForbiddenException;
 import com.polydome.godemon.domain.exception.AuthenticationException;
@@ -95,9 +96,10 @@ public class ChallengeController implements ChallengeContract.Presenter {
     public void onShowChallengeStatus(ChallengeContract.View challengeView, int challengeId, long challengerId) {
         try {
             ChallengeStatus status = getChallengeStatusUseCase.execute(challengerId, challengeId, false);
-            challengeView.showInitialChallengeStatus(status, challengeId, true);
-            status = getChallengeStatusUseCase.execute(challengerId, challengeId, true);
-            challengeView.showUpdatedChallengeStatus(status, challengeId);
+            challengeView.showInitialChallengeStatus(status, challengeId, true).subscribe(() -> {
+                ChallengeStatus updatedStatus = getChallengeStatusUseCase.execute(challengerId, challengeId, true);
+                challengeView.showUpdatedChallengeStatus(updatedStatus, challengeId);
+            });
         } catch (AuthenticationException e) {
             challengeView.showNotification(ChallengeContract.Notification.CHALLENGER_NOT_REGISTERED);
         } catch (NoSuchChallengeException e) {

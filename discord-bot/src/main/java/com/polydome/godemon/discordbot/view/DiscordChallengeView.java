@@ -8,6 +8,7 @@ import com.polydome.godemon.domain.entity.GameMode;
 import com.polydome.godemon.domain.model.ChallengeBrief;
 import com.polydome.godemon.domain.model.ChallengeStatus;
 import com.polydome.godemon.presentation.contract.ChallengeContract;
+import io.reactivex.Completable;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
@@ -96,17 +97,22 @@ public class DiscordChallengeView implements ChallengeContract.View {
     }
 
     @Override
-    public void showInitialChallengeStatus(ChallengeStatus challengeStatus, int challengeId, boolean isUpdating) {
-        channel.sendMessage(embedFactory.challengeStatus(challengeId, challengeStatus, isUpdating)).queue(msg -> {
-            outMessage = msg;
+    public Completable showInitialChallengeStatus(ChallengeStatus challengeStatus, int challengeId, boolean isUpdating) {
+        return Completable.create( emitter -> {
+                    channel.sendMessage(embedFactory.challengeStatus(challengeId, challengeStatus, isUpdating)).queue(msg -> {
+                        outMessage = msg;
 
-            messageActionRegistry.setAction(msg.getIdLong(), Action.JOIN_CHALLENGE);
-            messageActionRegistry.setActionArg(msg.getIdLong(), 0, challengeId);
+                        messageActionRegistry.setAction(msg.getIdLong(), Action.JOIN_CHALLENGE);
+                        messageActionRegistry.setActionArg(msg.getIdLong(), 0, challengeId);
 
-            msg.addReaction(msg.getJDA().getEmoteById(735488600980062210L)).queue();
-            if (!isUpdating)
-                outMessage.addReaction(outMessage.getJDA().getEmoteById(735567114638852178L)).queue();
-        });
+                        msg.addReaction(msg.getJDA().getEmoteById(735488600980062210L)).queue();
+                        if (!isUpdating)
+                            outMessage.addReaction(outMessage.getJDA().getEmoteById(735567114638852178L)).queue();
+
+                        emitter.onComplete();
+                    });
+                }
+        );
     }
 
     @Override
