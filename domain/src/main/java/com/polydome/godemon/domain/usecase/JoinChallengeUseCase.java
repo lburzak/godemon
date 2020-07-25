@@ -44,16 +44,22 @@ public class JoinChallengeUseCase {
         if (challenge.getParticipants().stream().anyMatch(participant -> participant.getId() == challenger.getId()))
             throw new ActionForbiddenException(String.format("Challenger is already a participant of challenge [%d]", challenge.getId()));
 
-        int[] gods = championRepository.getRandomIds(gameRulesProvider.getChallengeProposedGodsCount());
+        try {
+            Proposition existingProposition = propositionRepository.findProposition(challengeId, discordId);
 
-        propositionRepository.createProposition(
-                Proposition.builder()
-                    .challengeId(challengeId)
-                    .gods(gods)
-                    .requesterId(discordId)
-                    .build()
-        );
+            return new ChallengeProposition(existingProposition.getGods());
+        } catch (NoSuchEntityException e) {
+            int[] gods = championRepository.getRandomIds(gameRulesProvider.getChallengeProposedGodsCount());
 
-        return new ChallengeProposition(gods);
+            propositionRepository.createProposition(
+                    Proposition.builder()
+                            .challengeId(challengeId)
+                            .gods(gods)
+                            .requesterId(discordId)
+                            .build()
+            );
+
+            return new ChallengeProposition(gods);
+        }
     }
 }
