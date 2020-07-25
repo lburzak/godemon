@@ -25,11 +25,14 @@ public class StartChallengeUseCase {
             throw new AuthenticationException("Challenger not registered");
         }
 
+        Instant currentInstant = Instant.now();
+
         Challenge createdChallenge = challengeRepository.createChallenge(
             Challenge.builder()
                 .availableGods(Collections.emptyMap())
                 .gameMode(gameMode)
-                .lastUpdate(Instant.now())
+                .lastUpdate(currentInstant)
+                .createdAt(currentInstant)
                 .participants(List.of())
                 .status(ChallengeStage.PROPOSED)
                 .build()
