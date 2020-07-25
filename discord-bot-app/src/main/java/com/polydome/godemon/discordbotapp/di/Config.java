@@ -1,5 +1,6 @@
 package com.polydome.godemon.discordbotapp.di;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.polydome.godemon.data.dao.*;
 import com.polydome.godemon.data.redis.RedisStorage;
 import com.polydome.godemon.discordbot.listener.CommandListener;
@@ -41,6 +42,8 @@ import redis.clients.jedis.Jedis;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.security.auth.login.LoginException;
+import javax.sql.DataSource;
+import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -224,17 +227,24 @@ public class Config {
     }
 
     @Bean
+    public Connection connection(DataSource dataSource) throws SQLException {
+        return dataSource.getConnection();
+    }
+
+    @Bean
     @Singleton
-    public Connection connection(
+    public DataSource dataSource(
             final @Value("${db.url}") String url,
             final @Value("${db.username}") String username,
             final @Value("${db.password}") String password
-    ) throws SQLException {
-        return DriverManager
-                .getConnection(
-                        String.format("jdbc:%s?useLegacyDatetimeCode=false&serverTimezone=UTC", url),
-                        username,
-                        password);
+    ) throws PropertyVetoException {
+        final ComboPooledDataSource dataSource = new ComboPooledDataSource();
+        dataSource.setDriverClass("com.mysql.cj.jdbc.Driver");
+        dataSource.setJdbcUrl(String.format("jdbc:%s?useLegacyDatetimeCode=false&serverTimezone=UTC", url));
+        dataSource.setUser(username);
+        dataSource.setPassword(password);
+
+        return dataSource;
     }
 
     @Bean
