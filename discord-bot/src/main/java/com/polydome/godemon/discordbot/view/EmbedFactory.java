@@ -19,6 +19,12 @@ import java.util.Map;
 public class EmbedFactory {
     private final GodsDataProvider godsDataProvider;
     private final DateTimeFormatter dateTimeFormatter =
+            DateTimeFormatter.ofPattern("dd-MM-uuuu HH:mm")
+            .withZone(ZoneId.of("UTC"));
+    private final DateTimeFormatter timeFormatter =
+            DateTimeFormatter.ofPattern("HH:mm")
+            .withZone(ZoneId.of("UTC"));
+    private final DateTimeFormatter dateFormatter =
             DateTimeFormatter.ofPattern("dd-MM-uuuu")
             .withZone(ZoneId.of("UTC"));
 
@@ -35,6 +41,13 @@ public class EmbedFactory {
         EmbedBuilder builder = new EmbedBuilder();
 
         builder.setTitle("Challenge no. " + challengeId);
+
+        builder.setDescription(
+                String.format("Started %s at %s",
+                        dateFormatter.format(status.getCreatedAt()),
+                        timeFormatter.format(status.getCreatedAt())
+                )
+        );
 
         StringBuilder participants = new StringBuilder();
         for (final var participant : status.getParticipants()) {
@@ -81,15 +94,17 @@ public class EmbedFactory {
         final var COLUMN_ID = "ID";
         final var COLUMN_QUEUE = "Queue";
         final var COLUMN_LAST_UPDATE = "Last Update";
+        final var COLUMN_STARTED_AT = "Started at";
 
         TableBuilder table = new TableBuilder("Your Challenges");
-        table.addColumns(COLUMN_ID, COLUMN_QUEUE, COLUMN_LAST_UPDATE);
+        table.addColumns(COLUMN_ID, COLUMN_QUEUE, COLUMN_LAST_UPDATE, COLUMN_STARTED_AT);
 
         for (final var challenge : challenges) {
             table.addRecord(Map.ofEntries(
                     Map.entry(COLUMN_ID, String.valueOf(challenge.getId())),
                     Map.entry(COLUMN_QUEUE, String.valueOf(challenge.getGameMode())),
-                    Map.entry(COLUMN_LAST_UPDATE, dateTimeFormatter.format(challenge.getLastUpdate()))
+                    Map.entry(COLUMN_LAST_UPDATE, dateTimeFormatter.format(challenge.getLastUpdate())),
+                    Map.entry(COLUMN_STARTED_AT, dateTimeFormatter.format(challenge.getCreatedAt()))
             ));
         }
 
@@ -100,15 +115,17 @@ public class EmbedFactory {
         final var COLUMN_ID = "ID";
         final var COLUMN_QUEUE = "Queue";
         final var COLUMN_LAST_UPDATE = "Last Update";
+        final var COLUMN_STARTED_AT = "Started at";
 
         TableBuilder table = new TableBuilder(":crossed_swords: Lobby :crossed_swords:");
-        table.addColumns(COLUMN_ID, COLUMN_QUEUE, COLUMN_LAST_UPDATE);
+        table.addColumns(COLUMN_ID, COLUMN_QUEUE, COLUMN_LAST_UPDATE, COLUMN_STARTED_AT);
 
         for (final var challenge : challenges) {
             table.addRecord(Map.ofEntries(
                     Map.entry(COLUMN_ID, String.valueOf(challenge.getId())),
                     Map.entry(COLUMN_QUEUE, String.valueOf(challenge.getGameMode())),
-                    Map.entry(COLUMN_LAST_UPDATE, dateTimeFormatter.format(challenge.getLastUpdate()))
+                    Map.entry(COLUMN_LAST_UPDATE, dateTimeFormatter.format(challenge.getLastUpdate())),
+                    Map.entry(COLUMN_STARTED_AT, dateTimeFormatter.format(challenge.getCreatedAt()))
             ));
         }
 

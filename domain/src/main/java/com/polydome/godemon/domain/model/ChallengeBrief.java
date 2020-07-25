@@ -13,12 +13,14 @@ public class ChallengeBrief {
     private final int id;
     private final GameMode gameMode;
     private final Instant lastUpdate;
+    private final Instant createdAt;
 
     public static ChallengeBrief fromChallenge(Challenge challenge) {
         return ChallengeBrief.builder()
                 .id(challenge.getId())
                 .gameMode(challenge.getGameMode())
                 .lastUpdate(challenge.getLastUpdate())
+                .createdAt(challenge.getCreatedAt())
                 .build();
     }
 }

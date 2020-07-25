@@ -56,14 +56,7 @@ public class GetChallengeStatusUseCase {
                 .distinct()
                 .count();
 
-        return ChallengeStatus.builder()
-                .ended(challenge.getStatus() == ChallengeStage.FAILED)
-                .godToUsesLeft(challenge.getAvailableGods())
-                .godsLeftCount(challenge.getAvailableGods().size())
-                .participants(challenge.getParticipants().stream().map(Challenger::getInGameName).collect(Collectors.toList()))
-                .wins((int) wins)
-                .loses((int) (matchesCount - wins))
-                .build();
+        return ChallengeStatus.fromChallenge(challenge, (int) wins, (int) (matchesCount - wins));
     }
 
 }

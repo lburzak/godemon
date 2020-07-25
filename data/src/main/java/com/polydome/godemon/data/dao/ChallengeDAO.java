@@ -40,7 +40,7 @@ public class ChallengeDAO implements ChallengeRepository {
         deleteChampion =
                 dbConnection.prepareStatement("DELETE FROM champion WHERE god_id = ?");
         selectChallengeById =
-                dbConnection.prepareStatement("SELECT id, gamemode_id, last_update FROM challenge WHERE id = ?");
+                dbConnection.prepareStatement("SELECT * FROM challenge WHERE id = ?");
         selectChampionsByChallengeId =
                 dbConnection.prepareStatement("SELECT god_id, uses_left FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenge.id = ?");
         selectChallengesByParticipantId =

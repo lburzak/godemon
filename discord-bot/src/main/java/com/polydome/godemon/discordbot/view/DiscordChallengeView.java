@@ -164,6 +164,7 @@ public class DiscordChallengeView implements ChallengeContract.View {
         EmbedBuilder builder = new EmbedBuilder();
 
         builder.setTitle(embed.getTitle());
+        builder.setDescription(embed.getDescription());
         for (final var field : embed.getFields())
             builder.addField(field);
 
