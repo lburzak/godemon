@@ -2,6 +2,7 @@ package com.polydome.godemon.discordbot.listener;
 
 import com.polydome.godemon.discordbot.emote.EmoteManager;
 import com.polydome.godemon.discordbot.reaction.ActionListener;
+import com.polydome.godemon.discordbot.reaction.ReactionActionBus;
 import com.polydome.godemon.discordbot.view.action.MessageActionRegistry;
 import com.polydome.godemon.discordbot.view.DiscordChallengeView;
 import com.polydome.godemon.discordbot.view.Queue;
@@ -22,12 +23,13 @@ public class MessageActionListener implements ActionListener {
     private final GodsDataProvider godsDataProvider;
 
     @Inject
-    public MessageActionListener(ChallengeContract.Presenter presenter, DiscordChallengeView.Factory challengeViewFactory, EmoteManager emoteManager, MessageActionRegistry messageActionRegistry, GodsDataProvider godsDataProvider) {
+    public MessageActionListener(ChallengeContract.Presenter presenter, DiscordChallengeView.Factory challengeViewFactory, EmoteManager emoteManager, MessageActionRegistry messageActionRegistry, GodsDataProvider godsDataProvider, ReactionActionBus reactionActionBus) {
         this.presenter = presenter;
         this.challengeViewFactory = challengeViewFactory;
         this.emoteManager = emoteManager;
         this.messageActionRegistry = messageActionRegistry;
         this.godsDataProvider = godsDataProvider;
+        reactionActionBus.setListener(this);
     }
 
     public void onCreateChallenge(MessageReactionAddEvent event) {

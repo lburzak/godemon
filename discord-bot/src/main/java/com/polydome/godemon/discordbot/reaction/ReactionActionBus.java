@@ -2,6 +2,8 @@ package com.polydome.godemon.discordbot.reaction;
 
 import com.polydome.godemon.discordbot.view.action.Action;
 import com.polydome.godemon.discordbot.view.action.MessageActionRegistry;
+import io.reactivex.Observable;
+import io.reactivex.subjects.PublishSubject;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.slf4j.Logger;
@@ -17,7 +19,8 @@ public class ReactionActionBus extends ListenerAdapter implements MessageActionR
     private final ActionCodeStorage codeStorage;
     private final ActionArgStorage argStorage;
     private final Logger logger;
-    @Inject private ActionListener listener;
+
+    private ActionListener listener;
 
     @Inject
     public ReactionActionBus(ActionCodeStorage codeStorage, ActionArgStorage argStorage, Logger logger) {
@@ -71,5 +74,9 @@ public class ReactionActionBus extends ListenerAdapter implements MessageActionR
     @Override
     public void clearAction(long messageId) {
         codeStorage.clearCode(messageId);
+    }
+
+    public void setListener(ActionListener listener) {
+        this.listener = listener;
     }
 }
