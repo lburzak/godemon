@@ -1,5 +1,6 @@
 package com.polydome.godemon.dbtools.di;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.polydome.godemon.data.dao.EmoteDAO;
 import com.polydome.godemon.data.dao.EmoteHostDAO;
 import com.polydome.godemon.data.dao.GodDAO;
@@ -27,6 +28,8 @@ import org.springframework.context.annotation.*;
 
 import javax.inject.Singleton;
 import javax.security.auth.login.LoginException;
+import javax.sql.DataSource;
+import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -55,16 +58,18 @@ public class Config {
 
     @Bean
     @Singleton
-    public Connection connection(
+    public DataSource dataSource(
             final @Value("${db.url}") String url,
             final @Value("${db.username}") String username,
             final @Value("${db.password}") String password
-    ) throws SQLException {
-        return DriverManager
-                .getConnection(
-                        String.format("jdbc:%s?useLegacyDatetimeCode=false&serverTimezone=UTC", url),
-                        username,
-                        password);
+    ) throws PropertyVetoException {
+        final ComboPooledDataSource dataSource = new ComboPooledDataSource();
+        dataSource.setDriverClass("com.mysql.cj.jdbc.Driver");
+        dataSource.setJdbcUrl(String.format("jdbc:%s?useLegacyDatetimeCode=false&serverTimezone=UTC", url));
+        dataSource.setUser(username);
+        dataSource.setPassword(password);
+
+        return dataSource;
     }
 
     @Bean
@@ -112,8 +117,8 @@ public class Config {
     }
 
     @Bean
-    public GodsRepository godsRepository(Connection connection) throws SQLException {
-        return new GodDAO(connection);
+    public GodsRepository godsRepository(DataSource dataSource) {
+        return new GodDAO(dataSource);
     }
 
     @Bean
@@ -122,12 +127,12 @@ public class Config {
     }
 
     @Bean
-    public EmoteRepository emoteRepository(Connection connection) throws SQLException {
-        return new EmoteDAO(connection);
+    public EmoteRepository emoteRepository(DataSource dataSource) {
+        return new EmoteDAO(dataSource);
     }
 
     @Bean
-    public EmoteHostRepository emoteHostRepository(Connection connection) throws SQLException {
-        return new EmoteHostDAO(connection);
+    public EmoteHostRepository emoteHostRepository(DataSource dataSource) throws SQLException {
+        return new EmoteHostDAO(dataSource);
     }
 }

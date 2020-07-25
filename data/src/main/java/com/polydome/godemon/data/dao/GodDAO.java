@@ -1,5 +1,6 @@
 package com.polydome.godemon.data.dao;
 
+import com.polydome.godemon.data.dao.common.BaseDAO;
 import com.polydome.godemon.smitedata.entity.God;
 import com.polydome.godemon.smitedata.entity.SmiteChampion;
 import com.polydome.godemon.smitedata.repository.GodsRepository;
@@ -8,137 +9,127 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import javax.sql.DataSource;
 import java.sql.*;
 
-public class GodDAO implements GodsRepository, SmiteChampionRepository {
-    private final Connection connection;
-    private final PreparedStatement findByNameStatement;
-    private final PreparedStatement insertIfNotExistsStatement;
-    private final PreparedStatement countAllStatement;
-    private final PreparedStatement findByIdWithEmoteStatement;
-    private final PreparedStatement findByEmoteStatement;
-    private final PreparedStatement getRandomIdsStatement;
-
-    private final String LABEL_ID = "id";
-    private final String LABEL_NAME = "name";
-    private final String LABEL_LOCALIZED_NAME = "name_en";
-    private final String LABEL_COUNT = "count";
-    private final String LABEL_EMOTE_DISPLAY_ID = "display_id";
-
-    public GodDAO(Connection connection) throws SQLException {
-        this.connection = connection;
-        findByNameStatement =
-                connection.prepareStatement("SELECT * FROM god WHERE name LIKE ? LIMIT 1");
-        insertIfNotExistsStatement =
-                connection.prepareStatement("INSERT IGNORE INTO god(id, name, name_en) VALUES (?, ?, ?)");
-        countAllStatement =
-                connection.prepareStatement("SELECT COUNT(*) as count FROM god");
-        findByIdWithEmoteStatement =
-                connection.prepareStatement("SELECT god.id, god.name, god.name_en, emote.display_id FROM god INNER JOIN emote ON god.id = emote.god_id WHERE god.id = ?");
-        findByEmoteStatement =
-                connection.prepareStatement("SELECT god.id, god.name, god.name_en, emote.display_id FROM god INNER JOIN emote ON god.id = emote.god_id WHERE emote.display_id LIKE ?");
-        getRandomIdsStatement =
-                connection.prepareStatement("SELECT id FROM god ORDER BY rand() limit ?");
-    }
-
-    private God serializeResult(ResultSet result) throws SQLException {
-        return new God(
-                result.getInt(LABEL_ID),
-                result.getString(LABEL_NAME),
-                result.getString(LABEL_LOCALIZED_NAME)
-        );
+public class GodDAO extends BaseDAO implements GodsRepository, SmiteChampionRepository {
+    public GodDAO(DataSource dataSource) {
+        super(dataSource);
     }
 
     @Override
     public Maybe<God> findByName(String name) {
         return Maybe.create(emitter -> {
-            findByNameStatement.setString(1, name);
-            ResultSet result = findByNameStatement.executeQuery();
+            withStatement("SELECT * FROM god WHERE name LIKE ? LIMIT 1", findByName -> {
+                findByName.setString(1, name);
 
-            if (result.next())
-                emitter.onSuccess(serializeResult(result));
-            else
-                emitter.onComplete();
+                try (ResultSet result = findByName.executeQuery()) {
+                    if (result.next())
+                        emitter.onSuccess(godFromRow(result));
+                    else
+                        emitter.onComplete();
+                }
+            });
         });
     }
 
     @Override
     public Completable insertIfNotExists(God god) {
         return Completable.create(emitter -> {
-            insertIfNotExistsStatement.setInt(1, god.id);
-            insertIfNotExistsStatement.setString(2, god.name);
-            insertIfNotExistsStatement.setString(3, god.displayName);
+            withStatement("INSERT IGNORE INTO god(id, name, name_en) VALUES (?, ?, ?)", insertIfNotExists -> {
+                insertIfNotExists.setInt(1, god.id);
+                insertIfNotExists.setString(2, god.name);
+                insertIfNotExists.setString(3, god.displayName);
 
-            insertIfNotExistsStatement.execute();
-            emitter.onComplete();
+                insertIfNotExists.execute();
+                emitter.onComplete();
+
+            });
         });
     }
 
     @Override
     public Single<Integer> countAll() {
         return Single.create(emitter -> {
-           ResultSet result = countAllStatement.executeQuery();
-           emitter.onSuccess(result.getInt(LABEL_COUNT));
+            withStatement("SELECT COUNT(*) as count FROM god", countAll -> {
+                try (ResultSet result = countAll.executeQuery()) {
+                    emitter.onSuccess(result.getInt("count"));
+                }
+            });
         });
     }
 
     @Override
     public Maybe<SmiteChampion> findById(int id) {
         return Maybe.create(emitter -> {
-            findByIdWithEmoteStatement.setInt(1, id);
-            ResultSet result = findByIdWithEmoteStatement.executeQuery();
-            if (result.next()) {
-                SmiteChampion champion = new SmiteChampion(
-                        result.getInt(LABEL_ID),
-                        result.getString(LABEL_NAME),
-                        result.getString(LABEL_LOCALIZED_NAME),
-                        result.getString(LABEL_EMOTE_DISPLAY_ID)
-                );
+            withStatement("SELECT god.id, god.name, god.name_en, emote.display_id FROM god INNER JOIN emote ON god.id = emote.god_id WHERE god.id = ?", findByIdWithEmote -> {
+                findByIdWithEmote.setInt(1, id);
 
-                emitter.onSuccess(champion);
-            } else {
-                emitter.onComplete();
-            }
+                try (ResultSet result = findByIdWithEmote.executeQuery()) {
+                    if (result.next()) {
+                        emitter.onSuccess(smiteChampionFromRow(result));
+                    } else {
+                        emitter.onComplete();
+                    }
+                }
+            });
         });
     }
 
     @Override
     public Maybe<SmiteChampion> findByEmote(String emoteId) {
         return Maybe.create(emitter -> {
-            findByEmoteStatement.setString(1, emoteId);
-            ResultSet result = findByEmoteStatement.executeQuery();
-            if (result.next()) {
-                SmiteChampion champion = new SmiteChampion(
-                        result.getInt(LABEL_ID),
-                        result.getString(LABEL_NAME),
-                        result.getString(LABEL_LOCALIZED_NAME),
-                        result.getString(LABEL_EMOTE_DISPLAY_ID)
-                );
+            withStatement("SELECT god.id, god.name, god.name_en, emote.display_id FROM god INNER JOIN emote ON god.id = emote.god_id WHERE emote.display_id LIKE ?", findByEmoteStatement -> {
+                findByEmoteStatement.setString(1, emoteId);
 
-                emitter.onSuccess(champion);
-            } else {
-                emitter.onComplete();
-            }
+                try (ResultSet result = findByEmoteStatement.executeQuery()) {
+                    if (result.next()) {
+                        emitter.onSuccess(smiteChampionFromRow(result));
+                    } else {
+                        emitter.onComplete();
+                    }
+                }
+            });
         });
     }
 
     @Override
     public Maybe<int[]> getRandomIds(int count) {
         return Maybe.create(emitter -> {
-            getRandomIdsStatement.setInt(1, count);
-            ResultSet result = getRandomIdsStatement.executeQuery();
+            withStatement("SELECT id FROM god ORDER BY rand() limit ?", getRandomIdsStatement -> {
+                getRandomIdsStatement.setInt(1, count);
 
-            int[] ids = new int[count];
-            int i = 0;
-            while (result.next()) {
-                ids[i] = result.getInt(LABEL_ID);
-                i++;
-            }
+                try (ResultSet result = getRandomIdsStatement.executeQuery()) {
+                    int[] ids = new int[count];
+                    int i = 0;
+                    while (result.next()) {
+                        ids[i] = result.getInt("id");
+                        i++;
+                    }
 
-            if (i == count)
-                emitter.onSuccess(ids);
-            else
-                emitter.onComplete();
+                    if (i == count)
+                        emitter.onSuccess(ids);
+                    else
+                        emitter.onComplete();
+                }
+            });
         });
+    }
+
+    private SmiteChampion smiteChampionFromRow(ResultSet row) throws SQLException {
+        return new SmiteChampion(
+                row.getInt("god.id"),
+                row.getString("god.name"),
+                row.getString("god.name_en"),
+                row.getString("emote.display_id")
+        );
+    }
+
+    private God godFromRow(ResultSet row) throws SQLException {
+        return new God(
+                row.getInt("id"),
+                row.getString("name"),
+                row.getString("name_en")
+        );
     }
 }

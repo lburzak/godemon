@@ -1,67 +1,63 @@
 package com.polydome.godemon.data.dao;
 
+import com.polydome.godemon.data.dao.common.BaseDAO;
 import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.PropositionRepository;
 import com.polydome.godemon.domain.repository.exception.CRUDException;
-import com.polydome.godemon.domain.repository.exception.DuplicateEntryException;
 import com.polydome.godemon.domain.repository.exception.NoSuchEntityException;
 
-import java.sql.Connection;
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class PropositionDAO implements PropositionRepository {
-    private final PreparedStatement selectProposedChampions;
-    private final PreparedStatement countProposedChampions;
-    private final PreparedStatement insertProposedChampion;
-    private final PreparedStatement deleteProposedChampions;
-
-    public PropositionDAO(Connection dbConnection) throws SQLException {
-        countProposedChampions =
-                dbConnection.prepareStatement("SELECT COUNT(*) as `count` FROM proposed_champion WHERE challenge_id = ? AND requester_id = ?");
-        selectProposedChampions =
-                dbConnection.prepareStatement("SELECT god_id FROM proposed_champion WHERE challenge_id = ? AND requester_id = ?");
-        insertProposedChampion =
-                dbConnection.prepareStatement("INSERT INTO proposed_champion (challenge_id, requester_id, god_id) VALUES (?, ?, ?)");
-        deleteProposedChampions =
-                dbConnection.prepareStatement("DELETE FROM proposed_champion WHERE challenge_id = ? AND requester_id = ?");
+public class PropositionDAO extends BaseDAO implements PropositionRepository {
+    public PropositionDAO(DataSource dataSource) {
+        super(dataSource);
     }
 
     @Override
     public Proposition findProposition(int challengeId, long challengerId) {
-        try {            
+        try (final var connection = getConnection(); final var countProposedChampions =
+                connection.prepareStatement("SELECT COUNT(*) as `count` FROM proposed_champion WHERE challenge_id = ? AND requester_id = ?")) {
+
             countProposedChampions.setInt(1, challengeId);
             countProposedChampions.setLong(2, challengerId);
-            ResultSet resultSet = countProposedChampions.executeQuery();
 
-            var builder = Proposition.builder()
-                    .requesterId(challengerId)
-                    .challengeId(challengeId);
+            try (ResultSet championsCountResultSet = countProposedChampions.executeQuery()) {
+                var builder = Proposition.builder()
+                        .requesterId(challengerId)
+                        .challengeId(challengeId);
 
-            if (resultSet.next()) {
-                int count = resultSet.getInt("count");
+                if (championsCountResultSet.next()) {
+                    int count = championsCountResultSet.getInt("count");
 
-                if (count == 0) {
-                    throw new NoSuchEntityException(Proposition.class, challengeId + ", " + challengerId);
+                    if (count == 0) {
+                        throw new NoSuchEntityException(Proposition.class, challengeId + ", " + challengerId);
+                    }
+
+                    int[] champions = new int[count];
+
+                    try (final var selectProposedChampions =
+                                 connection.prepareStatement("SELECT god_id FROM proposed_champion WHERE challenge_id = ? AND requester_id = ?")) {
+
+                        selectProposedChampions.setInt(1, challengeId);
+                        selectProposedChampions.setLong(2, challengerId);
+
+                        try (final var championsResultSet = selectProposedChampions.executeQuery()) {
+                            int i = 0;
+                            while (championsResultSet.next()) {
+                                champions[i] = (championsResultSet.getInt("god_id"));
+                                i++;
+                            }
+
+                            builder.gods(champions);
+                        }
+                    }
                 }
 
-                int[] champions = new int[count];
-
-                selectProposedChampions.setInt(1, challengeId);
-                selectProposedChampions.setLong(2, challengerId);
-                resultSet = selectProposedChampions.executeQuery();
-
-                int i = 0;
-                while (resultSet.next()) {
-                    champions[i] = (resultSet.getInt("god_id"));
-                    i++;
-                }
-
-                builder.gods(champions);
+                return builder.build();
             }
-
-            return builder.build();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -71,7 +67,9 @@ public class PropositionDAO implements PropositionRepository {
 
     @Override
     public void deleteProposition(int challengeId, long challengerId) {
-        try {
+        try (final var connection = getConnection(); final var deleteProposedChampions =
+                connection.prepareStatement("DELETE FROM proposed_champion WHERE challenge_id = ? AND requester_id = ?")) {
+
             deleteProposedChampions.setInt(1, challengeId);
             deleteProposedChampions.setLong(2, challengerId);
 
@@ -83,7 +81,9 @@ public class PropositionDAO implements PropositionRepository {
 
     @Override
     public void createProposition(Proposition proposition) throws CRUDException {
-        try {
+        try (final var connection = getConnection(); final var insertProposedChampion =
+                connection.prepareStatement("INSERT INTO proposed_champion (challenge_id, requester_id, god_id) VALUES (?, ?, ?)")) {
+
             insertProposedChampion.setInt(1, proposition.getChallengeId());
             insertProposedChampion.setLong(2, proposition.getRequesterId());
 

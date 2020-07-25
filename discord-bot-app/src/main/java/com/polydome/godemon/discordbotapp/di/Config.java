@@ -40,13 +40,11 @@ import redis.clients.jedis.Jedis;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.security.auth.login.LoginException;
+import javax.sql.DataSource;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.sql.Connection;
-import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
-import java.sql.SQLException;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Configuration
@@ -203,38 +201,33 @@ public class Config {
     // Data
 
     @Bean
-    public ChallengerRepository challengerRepository(Connection connection) throws SQLException {
-        return new ChallengerDAO(connection);
+    public ChallengerRepository challengerRepository(DataSource dataSource) {
+        return new ChallengerDAO(dataSource);
     }
 
     @Bean
-    public ChallengeRepository challengeRepository(Connection connection, SmiteGameModeService gameModeService) throws SQLException {
-        return new ChallengeDAO(connection, gameModeService);
+    public ChallengeRepository challengeRepository(DataSource dataSource, SmiteGameModeService gameModeService) {
+        return new ChallengeDAO(dataSource, gameModeService);
     }
 
     @Bean
-    public PropositionRepository propositionRepository(Connection connection) throws SQLException {
-        return new PropositionDAO(connection);
+    public PropositionRepository propositionRepository(DataSource dataSource) {
+        return new PropositionDAO(dataSource);
     }
 
     @Bean
-    public GodsRepository godsRepository(Connection connection) throws SQLException {
-        return new GodDAO(connection);
+    public GodsRepository godsRepository(DataSource dataSource) {
+        return new GodDAO(dataSource);
     }
 
     @Bean
-    public SmiteChampionRepository smiteChampionRepository(Connection connection) throws SQLException {
-        return new GodDAO(connection);
+    public SmiteChampionRepository smiteChampionRepository(DataSource dataSource) {
+        return new GodDAO(dataSource);
     }
 
     @Bean
-    public ContributionRepository contributionRepository(Connection connection) throws SQLException {
-        return new ContributionDAO(connection);
-    }
-
-    @Bean
-    public Connection connection(DataSource dataSource) throws SQLException {
-        return dataSource.getConnection();
+    public ContributionRepository contributionRepository(DataSource dataSource) {
+        return new ContributionDAO(dataSource);
     }
 
     @Bean
