@@ -43,7 +43,7 @@ class XmlEmoteStoreTest {
                 "    </emote>\n" +
                 "</emotes>";
 
-        SUT.load(new ByteArrayInputStream(xmlContent.getBytes())).subscribe(() -> {
+        SUT.load(new ByteArrayInputStream(xmlContent.getBytes())).subscribe(m -> {
             assertThat(SUT.findId("history"), equalTo(735491281798823959L));
         });
 
