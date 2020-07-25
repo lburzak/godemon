@@ -75,7 +75,7 @@ public class ChallengeController implements ChallengeContract.Presenter {
         ChallengeStatus status = getChallengeStatusUseCase.execute(challengerId, challengeId, false);
 
         challengeView.showNotification(ChallengeContract.Notification.CHALLENGE_CREATED);
-        challengeView.showInitialChallengeStatus(status, challengeId, false);
+        challengeView.showInitialChallengeStatus(status, challengeId, false).subscribe();
     }
 
     @Override
