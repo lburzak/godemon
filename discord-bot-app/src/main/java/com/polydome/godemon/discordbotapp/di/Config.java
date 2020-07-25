@@ -3,6 +3,7 @@ package com.polydome.godemon.discordbotapp.di;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.polydome.godemon.data.dao.*;
 import com.polydome.godemon.data.redis.RedisStorage;
+import com.polydome.godemon.discordbot.reaction.ReactionActionBus;
 import com.polydome.godemon.discordbot.view.service.GodsDataProvider;
 import com.polydome.godemon.domain.repository.*;
 import com.polydome.godemon.domain.service.ChallengeService;
@@ -62,8 +63,10 @@ public class Config {
     @Bean
     @Singleton
     public JDA jda(
-            final @Value("${discord.botToken}") String botToken
-    ) throws LoginException {
+            final @Value("${discord.botToken}") String botToken,
+            // Forces creation of ReactionActionBus before its demanded by ChallengeView.Factory TODO: Remove
+            final ReactionActionBus reactionActionBus
+            ) throws LoginException {
         return JDABuilder
                 .createLight(botToken, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_EMOJIS)
                 .enableCache(CacheFlag.EMOTE)
