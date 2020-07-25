@@ -1,7 +1,6 @@
 package com.polydome.godemon.data.dao;
 
 import com.polydome.godemon.domain.entity.Challenge;
-import com.polydome.godemon.domain.entity.ChallengeStage;
 import com.polydome.godemon.domain.entity.Challenger;
 import com.polydome.godemon.domain.repository.ChallengeRepository;
 import com.polydome.godemon.domain.repository.exception.CRUDException;
@@ -29,7 +28,7 @@ public class ChallengeDAO implements ChallengeRepository {
         insertChampionStatement =
                 dbConnection.prepareStatement("INSERT INTO champion (challenge_id, god_id, uses_left) VALUES (?, ?, ?)");
         insertChallengeStatement =
-                dbConnection.prepareStatement("INSERT INTO challenge (last_update, gamemode_id) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+                dbConnection.prepareStatement("INSERT INTO challenge (last_update, created_at, gamemode_id) VALUES (?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
         updateChallengeLastUpdateStatement =
                 dbConnection.prepareStatement("UPDATE challenge SET last_update = ? WHERE id = ?");
         selectParticipantsByChallengeId =
@@ -41,7 +40,7 @@ public class ChallengeDAO implements ChallengeRepository {
         deleteChampion =
                 dbConnection.prepareStatement("DELETE FROM champion WHERE god_id = ?");
         selectChallengeById =
-                dbConnection.prepareStatement("SELECT id, gamemode_id, last_update FROM challenge WHERE id = ?");
+                dbConnection.prepareStatement("SELECT * FROM challenge WHERE id = ?");
         selectChampionsByChallengeId =
                 dbConnection.prepareStatement("SELECT god_id, uses_left FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenge.id = ?");
         selectChallengesByParticipantId =
@@ -57,7 +56,8 @@ public class ChallengeDAO implements ChallengeRepository {
             final var createdChallenge = challenge.toBuilder();
 
             insertChallengeStatement.setTimestamp(1, Timestamp.from(challenge.getLastUpdate()));
-            insertChallengeStatement.setInt(2, gameModeService.getGameModeId(challenge.getGameMode()));
+            insertChallengeStatement.setTimestamp(2, Timestamp.from(challenge.getCreatedAt()));
+            insertChallengeStatement.setInt(3, gameModeService.getGameModeId(challenge.getGameMode()));
             insertChallengeStatement.execute();
 
             try (ResultSet generatedKeys = insertChallengeStatement.getGeneratedKeys()) {
@@ -83,27 +83,31 @@ public class ChallengeDAO implements ChallengeRepository {
         }
     }
 
+    private Challenge challengeFromRow(ResultSet resultSet, Challenge.ChallengeBuilder builder) throws SQLException {
+        final int id = resultSet.getInt("id");
+
+        builder
+                .id(id)
+                .lastUpdate(resultSet.getTimestamp("last_update").toInstant())
+                .createdAt(resultSet.getTimestamp("created_at").toInstant())
+                .gameMode(gameModeService.getGameModeFromId(resultSet.getInt("gamemode_id")))
+                .availableGods(findAvailableGods(id))
+                .participants(findParticipants(id));
+
+        return builder.build();
+    }
+
     @Override
     public Challenge findChallenge(int id) throws CRUDException {
         try {
-            var challengeBuilder = Challenge.builder();
-
             selectChallengeById.setInt(1, id);
             ResultSet resultSet = selectChallengeById.executeQuery();
 
             if (resultSet.next()) {
-                challengeBuilder
-                        .lastUpdate(resultSet.getTimestamp("last_update").toInstant())
-                        .gameMode(gameModeService.getGameModeFromId(resultSet.getInt("gamemode_id")))
-                        .id(resultSet.getInt("id"));
+                return challengeFromRow(resultSet, Challenge.builder());
             } else {
                 throw new NoSuchEntityException(Challenge.class, String.valueOf(id));
             }
-            
-            challengeBuilder.availableGods(findAvailableGods(id));
-            challengeBuilder.participants(findParticipants(id));
-
-            return challengeBuilder.build();
         } catch (SQLException e) {
             throw new CRUDException("Internal query failure", e);
         }
@@ -116,19 +120,9 @@ public class ChallengeDAO implements ChallengeRepository {
 
             List<Challenge> challenges = new LinkedList<>();
             Challenge.ChallengeBuilder builder =  Challenge.builder();
-            int id;
 
             while (resultSet.next()) {
-                id = resultSet.getInt("id");
-
-                builder.id(id)
-                        .lastUpdate(resultSet.getTimestamp("last_update").toInstant())
-                        .gameMode(gameModeService.getGameModeFromId(resultSet.getInt("gamemode_id")));
-
-                builder.availableGods(findAvailableGods(id));
-                builder.participants(findParticipants(id));
-
-                challenges.add(builder.build());
+                challenges.add(challengeFromRow(resultSet, builder));
             }
 
             return challenges;
@@ -216,21 +210,11 @@ public class ChallengeDAO implements ChallengeRepository {
             selectChallengesByParticipantId.setLong(1, participantId);
             resultSet = selectChallengesByParticipantId.executeQuery();
 
-            int id;
             List<Challenge> challenges = new LinkedList<>();
+            Challenge.ChallengeBuilder builder = Challenge.builder();
 
             while (resultSet.next()) {
-                id = resultSet.getInt("id");
-                challenges.add(
-                    Challenge.builder()
-                        .id(id)
-                        .participants(findParticipants(id))
-                        .gameMode(gameModeService.getGameModeFromId(resultSet.getInt("gamemode_id")))
-                        .lastUpdate(resultSet.getTimestamp("last_update").toInstant())
-                        .status(ChallengeStage.ONGOING)
-                        .availableGods(findAvailableGods(id))
-                        .build()
-                );
+                challenges.add(challengeFromRow(resultSet, builder));
             }
 
             return challenges;

@@ -4,6 +4,7 @@ import com.polydome.godemon.domain.entity.Proposition;
 import com.polydome.godemon.domain.repository.PropositionRepository;
 import com.polydome.godemon.domain.repository.exception.CRUDException;
 import com.polydome.godemon.domain.repository.exception.DuplicateEntryException;
+import com.polydome.godemon.domain.repository.exception.NoSuchEntityException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -40,6 +41,11 @@ public class PropositionDAO implements PropositionRepository {
 
             if (resultSet.next()) {
                 int count = resultSet.getInt("count");
+
+                if (count == 0) {
+                    throw new NoSuchEntityException(Proposition.class, challengeId + ", " + challengerId);
+                }
+
                 int[] champions = new int[count];
 
                 selectProposedChampions.setInt(1, challengeId);

@@ -37,7 +37,11 @@ public class GetChallengeStatusUseCase {
         if (doUpdate)
             challengeService.synchronizeChallenge(challengeId);
 
-        challenge = challengeRepository.findChallenge(challengeId);
+        try {
+            challenge = challengeRepository.findChallenge(challengeId);
+        } catch (NoSuchEntityException e) {
+            throw new NoSuchChallengeException(challengeId);
+        }
 
         List<Contribution> contributions = contributionRepository.findContributionsByChallenge(challengeId);
 
@@ -52,14 +56,7 @@ public class GetChallengeStatusUseCase {
                 .distinct()
                 .count();
 
-        return ChallengeStatus.builder()
-                .ended(challenge.getStatus() == ChallengeStage.FAILED)
-                .godToUsesLeft(challenge.getAvailableGods())
-                .godsLeftCount(challenge.getAvailableGods().size())
-                .participants(challenge.getParticipants().stream().map(Challenger::getInGameName).collect(Collectors.toList()))
-                .wins((int) wins)
-                .loses((int) (matchesCount - wins))
-                .build();
+        return ChallengeStatus.fromChallenge(challenge, (int) wins, (int) (matchesCount - wins));
     }
 
 }

@@ -75,7 +75,7 @@ public class ChallengeController implements ChallengeContract.Presenter {
         ChallengeStatus status = getChallengeStatusUseCase.execute(challengerId, challengeId, false);
 
         challengeView.showNotification(ChallengeContract.Notification.CHALLENGE_CREATED);
-        challengeView.showInitialChallengeStatus(status, challengeId, false);
+        challengeView.showInitialChallengeStatus(status, challengeId, false).subscribe();
     }
 
     @Override
@@ -95,7 +95,15 @@ public class ChallengeController implements ChallengeContract.Presenter {
     @Override
     public void onShowChallengeStatus(ChallengeContract.View challengeView, int challengeId, long challengerId) {
         try {
-            ChallengeStatus status = getChallengeStatusUseCase.execute(challengerId, challengeId, false);
+            ChallengeStatus status;
+
+            try {
+                status = getChallengeStatusUseCase.execute(challengerId, challengeId, false);
+            } catch (NoSuchChallengeException e) {
+                challengeView.showNotification(ChallengeContract.Notification.CHALLENGE_NOT_EXISTS);
+                return;
+            }
+
             challengeView.showInitialChallengeStatus(status, challengeId, true).subscribe(() -> {
                 ChallengeStatus updatedStatus = getChallengeStatusUseCase.execute(challengerId, challengeId, true);
                 challengeView.showUpdatedChallengeStatus(updatedStatus, challengeId);

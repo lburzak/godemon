@@ -17,7 +17,7 @@ public class ReactionActionBus extends ListenerAdapter implements MessageActionR
     private final ActionCodeStorage codeStorage;
     private final ActionArgStorage argStorage;
     private final Logger logger;
-    private ActionListener listener;
+    @Inject private ActionListener listener;
 
     @Inject
     public ReactionActionBus(ActionCodeStorage codeStorage, ActionArgStorage argStorage, Logger logger) {
@@ -71,9 +71,5 @@ public class ReactionActionBus extends ListenerAdapter implements MessageActionR
     @Override
     public void clearAction(long messageId) {
         codeStorage.clearCode(messageId);
-    }
-
-    public void setListener(ActionListener listener) {
-        this.listener = listener;
     }
 }

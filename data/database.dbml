@@ -35,6 +35,7 @@ Table challenger {
 Table challenge {
     id "int unsigned" [pk, increment]
     last_update timestamp [null]
+    created_at timestamp [not null]
     gamemode_id "int unsigned" [not null, note: 'Corresponds to Hi-Rez Queue ID']
     Note: 'Ongoing challenges'
 }

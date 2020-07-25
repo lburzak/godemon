@@ -16,6 +16,7 @@ public class Challenge {
     private final Map<Integer, Integer> availableGods;
     private final GameMode gameMode;
     private final Instant lastUpdate;
+    private final Instant createdAt;
     private final List<Challenger> participants;
     private final ChallengeStage status;
 }

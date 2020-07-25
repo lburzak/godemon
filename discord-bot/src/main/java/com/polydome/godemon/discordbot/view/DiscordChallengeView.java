@@ -105,9 +105,9 @@ public class DiscordChallengeView implements ChallengeContract.View {
                         messageActionRegistry.setAction(msg.getIdLong(), Action.JOIN_CHALLENGE);
                         messageActionRegistry.setActionArg(msg.getIdLong(), 0, challengeId);
 
-                        msg.addReaction(msg.getJDA().getEmoteById(735488600980062210L)).queue();
+                        msg.addReaction(emoteManager.findByName("join")).queue();
                         if (!isUpdating)
-                            outMessage.addReaction(outMessage.getJDA().getEmoteById(735567114638852178L)).queue();
+                            outMessage.addReaction(emoteManager.findByName("sync")).queue();
 
                         emitter.onComplete();
                     });
@@ -118,7 +118,7 @@ public class DiscordChallengeView implements ChallengeContract.View {
     @Override
     public void showUpdatedChallengeStatus(ChallengeStatus challengeStatus, int challengeId) {
         outMessage.editMessage(embedFactory.challengeStatus(challengeId, challengeStatus, false)).queue();
-        outMessage.addReaction(outMessage.getJDA().getEmoteById(735567114638852178L)).queue();
+        outMessage.addReaction(emoteManager.findByName("sync")).queue();
     }
 
     @Override
@@ -158,16 +158,17 @@ public class DiscordChallengeView implements ChallengeContract.View {
 
     @Override
     public void showUpdating() {
-        outMessage.clearReactions(outMessage.getJDA().getEmoteById(735567114638852178L)).queue();
+        outMessage.clearReactions(emoteManager.findByName("sync")).queue();
 
         MessageEmbed embed = outMessage.getEmbeds().get(0);
         EmbedBuilder builder = new EmbedBuilder();
 
         builder.setTitle(embed.getTitle());
+        builder.setDescription(embed.getDescription());
         for (final var field : embed.getFields())
             builder.addField(field);
 
-        builder.setFooter("Updating...");
+        builder.setFooter("Updating...", emoteManager.findByName("sync").getImageUrl());
 
         outMessage.editMessage(builder.build()).queue();
     }

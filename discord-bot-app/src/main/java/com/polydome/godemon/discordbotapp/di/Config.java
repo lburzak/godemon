@@ -3,9 +3,6 @@ package com.polydome.godemon.discordbotapp.di;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.polydome.godemon.data.dao.*;
 import com.polydome.godemon.data.redis.RedisStorage;
-import com.polydome.godemon.discordbot.listener.CommandListener;
-import com.polydome.godemon.discordbot.listener.MessageActionListener;
-import com.polydome.godemon.discordbot.reaction.ReactionActionBus;
 import com.polydome.godemon.discordbot.view.service.GodsDataProvider;
 import com.polydome.godemon.domain.repository.*;
 import com.polydome.godemon.domain.service.ChallengeService;
@@ -37,15 +34,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.xml.sax.SAXException;
 import redis.clients.jedis.Jedis;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.security.auth.login.LoginException;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.sql.Connection;
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -64,16 +64,11 @@ public class Config {
     @Bean
     @Singleton
     public JDA jda(
-            final @Value("${discord.botToken}") String botToken,
-            final CommandListener commandListener,
-            final ReactionActionBus reactionActionBus,
-            final MessageActionListener messageActionListener
+            final @Value("${discord.botToken}") String botToken
     ) throws LoginException {
-        reactionActionBus.setListener(messageActionListener);
         return JDABuilder
                 .createLight(botToken, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_EMOJIS)
                 .enableCache(CacheFlag.EMOTE)
-                .addEventListeners(commandListener, reactionActionBus)
                 .build();
     }
 
@@ -96,6 +91,17 @@ public class Config {
     ) {
         return new ChallengeController(joinChallengeUseCase, acceptChallengeUseCase, getChallengeStatusUseCase, introduceUseCase,
                 startChallengeUseCase, getAvailableChallengesUseCase, getAllChallengesUseCase);
+    }
+
+    @Bean
+    public SAXParser saxParser(SAXParserFactory factory) throws ParserConfigurationException, SAXException {
+        return factory.newSAXParser();
+    }
+
+    @Bean
+    @Singleton
+    public SAXParserFactory saxParserFactory() {
+        return SAXParserFactory.newInstance();
     }
 
     // Domain
