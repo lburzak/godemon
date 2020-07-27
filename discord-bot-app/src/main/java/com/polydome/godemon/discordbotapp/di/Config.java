@@ -240,6 +240,8 @@ public class Config {
             final @Value("${db.password}") String password
     ) throws PropertyVetoException {
         final ComboPooledDataSource dataSource = new ComboPooledDataSource();
+        dataSource.setDebugUnreturnedConnectionStackTraces(true);
+        dataSource.setUnreturnedConnectionTimeout(4);
         dataSource.setDriverClass("com.mysql.cj.jdbc.Driver");
         dataSource.setJdbcUrl(String.format("jdbc:%s?useLegacyDatetimeCode=false&serverTimezone=UTC", url));
         dataSource.setUser(username);

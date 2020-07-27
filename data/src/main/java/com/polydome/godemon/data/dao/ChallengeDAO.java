@@ -41,12 +41,13 @@ public class ChallengeDAO extends BaseDAO implements ChallengeRepository {
         try (final var connection = getConnection(); final var selectChallengeById =
                 connection.prepareStatement("SELECT * FROM challenge WHERE id = ?")) {
             selectChallengeById.setInt(1, id);
-            ResultSet resultSet = selectChallengeById.executeQuery();
 
-            if (resultSet.next()) {
-                return challengeFromRow(resultSet, Challenge.builder());
-            } else {
-                throw new NoSuchEntityException(Challenge.class, String.valueOf(id));
+            try (ResultSet resultSet = selectChallengeById.executeQuery()) {
+                if (resultSet.next()) {
+                    return challengeFromRow(resultSet, Challenge.builder());
+                } else {
+                    throw new NoSuchEntityException(Challenge.class, String.valueOf(id));
+                }
             }
         } catch (SQLException e) {
             throw new CRUDException("Internal query failure", e);
@@ -92,16 +93,17 @@ public class ChallengeDAO extends BaseDAO implements ChallengeRepository {
                          connection.prepareStatement("SELECT challenge.* FROM challenge INNER JOIN participant ON challenge.id = participant.challenge_id WHERE participant.challenger_id = ?")) {
                 selectChallengesByParticipantId.setLong(1, participantId);
 
-                ResultSet resultSet = selectChallengesByParticipantId.executeQuery();
+                try (ResultSet resultSet = selectChallengesByParticipantId.executeQuery()) {
+                    List<Challenge> challenges = new LinkedList<>();
+                    Challenge.ChallengeBuilder builder = Challenge.builder();
 
-                List<Challenge> challenges = new LinkedList<>();
-                Challenge.ChallengeBuilder builder = Challenge.builder();
+                    while (resultSet.next()) {
+                        challenges.add(challengeFromRow(resultSet, builder));
+                    }
 
-                while (resultSet.next()) {
-                    challenges.add(challengeFromRow(resultSet, builder));
+                    return challenges;
                 }
 
-                return challenges;
             }
         } catch (SQLException e) {
             throw new CRUDException(e);
@@ -143,16 +145,16 @@ public class ChallengeDAO extends BaseDAO implements ChallengeRepository {
         try (final var connection = getConnection(); final var selectChampionsByChallengeId =
                 connection.prepareStatement("SELECT god_id, uses_left FROM challenge INNER JOIN champion ON challenge.id = champion.challenge_id WHERE challenge.id = ?")) {
             selectChampionsByChallengeId.setLong(1, challengeId);
-            ResultSet championsRow = selectChampionsByChallengeId.executeQuery();
 
-            Map<Integer, Integer> availableGods = new HashMap<>();
+            try (ResultSet championsRow = selectChampionsByChallengeId.executeQuery()) {
+                Map<Integer, Integer> availableGods = new HashMap<>();
 
-            while (championsRow.next()) {
-                availableGods.put(championsRow.getInt("god_id"), championsRow.getInt("uses_left"));
+                while (championsRow.next()) {
+                    availableGods.put(championsRow.getInt("god_id"), championsRow.getInt("uses_left"));
+                }
+
+                return availableGods;
             }
-
-            return availableGods;
-
         }
     }
 
@@ -216,14 +218,15 @@ public class ChallengeDAO extends BaseDAO implements ChallengeRepository {
         try (final var connection = getConnection(); final var selectParticipantsByChallengeId =
                 connection.prepareStatement("SELECT challenger.* FROM challenger INNER JOIN participant ON challenger.discord_id = participant.challenger_id WHERE challenge_id = ?")) {
             selectParticipantsByChallengeId.setInt(1, challengeId);
-            ResultSet participantRow = selectParticipantsByChallengeId.executeQuery();
 
-            List<Challenger> participants = new LinkedList<>();
-            while (participantRow.next()) {
-                participants.add(challengerFromRow(participantRow));
+            try (ResultSet participantRow = selectParticipantsByChallengeId.executeQuery()) {
+                List<Challenger> participants = new LinkedList<>();
+                while (participantRow.next()) {
+                    participants.add(challengerFromRow(participantRow));
+                }
+
+                return participants;
             }
-
-            return participants;
         }
     }
 

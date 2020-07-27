@@ -42,14 +42,14 @@ public class ContributionDAO extends BaseDAO implements ContributionRepository {
 
             selectContributions.setInt(1, challengeId);
 
-            ResultSet resultSet = selectContributions.executeQuery();
+            try (ResultSet resultSet = selectContributions.executeQuery()) {
+                List<Contribution> contributions = new LinkedList<>();
+                while (resultSet.next()) {
+                    contributions.add(contributionFromRow(resultSet));
+                }
 
-            List<Contribution> contributions = new LinkedList<>();
-            while (resultSet.next()) {
-                contributions.add(contributionFromRow(resultSet));
+                return contributions;
             }
-
-            return contributions;
         } catch (SQLException e) {
             e.printStackTrace();
         }
