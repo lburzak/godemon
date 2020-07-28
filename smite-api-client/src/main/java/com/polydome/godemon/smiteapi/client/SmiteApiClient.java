@@ -1,10 +1,7 @@
 package com.polydome.godemon.smiteapi.client;
 
 import com.polydome.godemon.smiteapi.model.*;
-import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.JsonEncodingException;
-import com.squareup.moshi.Moshi;
-import com.squareup.moshi.Types;
+import com.squareup.moshi.*;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -88,7 +85,7 @@ public class SmiteApiClient {
                 if (body != null) {
                     String bodyContent = body.string();
                     try {
-                        R jsonResponse = adapter.fromJson(bodyContent);
+                        R jsonResponse = adapter.lenient().fromJson(bodyContent);
                         if (jsonResponse == null)
                             emitter.onError(new UnexpectedResponseException("Failed to parse JSON", bodyContent));
                         else {
@@ -96,7 +93,9 @@ public class SmiteApiClient {
                         }
                     } catch (JsonEncodingException e) {
                         emitter.onError(new UnexpectedResponseException("Failed to parse JSON: " + e.getMessage(), bodyContent));
-                    }
+                    } catch (JsonDataException e) {
+			emitter.onError(new UnexpectedResponseException("Failed to parse JSON: " + e.getMessage(), bodyContent));
+		    }
                 } else {
                     emitter.onError(new Exception("Request failed"));
                 }
@@ -136,7 +135,7 @@ public class SmiteApiClient {
                         sessionStorage.setSessionId(response.sessionId, SESSION_ALIVE_MINUTES);
                         logger.info("Session created");
                         emitter.onComplete();
-                    });
+                    }, e -> { if (e instanceof UnexpectedResponseException) logger.error("UnexpectedResponse: {}", ((UnexpectedResponseException) e).getRawResponse()); });
         });
     }
 
@@ -193,7 +192,7 @@ public class SmiteApiClient {
 
                 JsonAdapter<List<RecentMatch>> adapter = moshi.adapter(Types.newParameterizedType(List.class, RecentMatch.class));
                 performJsonApiCall(request, adapter)
-                        .subscribe(emitter::onSuccess);
+                        .subscribe(emitter::onSuccess, e -> { if (e instanceof UnexpectedResponseException) logger.error("UnexpectedResponse: {}", ((UnexpectedResponseException) e).getRawResponse()); });
             })
         );
     }
